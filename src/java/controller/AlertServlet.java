@@ -12,14 +12,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * AlertServlet — Servlet độc lập xử lý cảnh báo và case đối soát.
- * URL: /alert?action=xxx
- *
- * doGet : hiển thị danh sách alert, chi tiết alert, đóng alert,
- *         danh sách case, chi tiết case, đóng case
- * doPost: giao case (caseAssign)
- */
 @WebServlet("/alert")
 public class AlertServlet extends HttpServlet {
 
@@ -27,95 +19,79 @@ public class AlertServlet extends HttpServlet {
     private final ReconciliationCaseDAO caseDAO  = new ReconciliationCaseDAO();
     private final AuditLogDAO           auditDAO = new AuditLogDAO();
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+
+        String action = request.getParameter("action");
         if (action == null) action = "";
 
         switch (action) {
-            case "alertList":   showAlertList(req, resp);    break;
-            case "alertDetail": showAlertDetail(req, resp);  break;
-            case "alertClose":  handleAlertClose(req, resp); break;
-            case "caseList":    showCaseList(req, resp);     break;
-            case "caseDetail":  showCaseDetail(req, resp);   break;
-            case "caseClose":   handleCaseClose(req, resp);  break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
+
+            // ══════════════ ALERTS ══════════════
+            case "alertList":
+                request.setAttribute("alerts", alertDAO.getOpen());
+                request.getRequestDispatcher("/views/alert/alertsList.jsp").forward(request, response);
+                break;
+
+            case "alertDetail":
+                request.setAttribute("alert", alertDAO.getById(Integer.parseInt(request.getParameter("id"))));
+                request.getRequestDispatcher("/views/alert/alertDetail.jsp").forward(request, response);
+                break;
+
+            case "alertClose":
+                int alertId = Integer.parseInt(request.getParameter("id"));
+                alertDAO.updateStatus(alertId, "Closed");
+                logAction(request, "CLOSE", "AlertEvents", alertId);
+                response.sendRedirect(request.getContextPath() + "/main?action=alertList");
+                break;
+
+            // ══════════════ CASES ══════════════
+            case "caseList":
+                request.setAttribute("cases", caseDAO.getAll());
+                request.getRequestDispatcher("/views/reconcase/caseList.jsp").forward(request, response);
+                break;
+
+            case "caseDetail":
+                request.setAttribute("recase", caseDAO.getById(Integer.parseInt(request.getParameter("id"))));
+                request.getRequestDispatcher("/views/reconcase/caseDetail.jsp").forward(request, response);
+                break;
+
+            case "caseAssign":
+                int caseId = Integer.parseInt(request.getParameter("caseId"));
+                int userId = Integer.parseInt(request.getParameter("userId"));
+                caseDAO.assignCase(caseId, userId);
+                logAction(request, "UPDATE", "ReconciliationCases", caseId);
+                response.sendRedirect(request.getContextPath() + "/main?action=caseDetail&id=" + caseId);
+                break;
+
+            case "caseClose":
+                int closeCaseId = Integer.parseInt(request.getParameter("id"));
+                caseDAO.updateStatus(closeCaseId, "Closed");
+                logAction(request, "CLOSE", "ReconciliationCases", closeCaseId);
+                response.sendRedirect(request.getContextPath() + "/main?action=caseList");
+                break;
+
+            default:
+                response.sendRedirect(request.getContextPath() + "/main?action=dashboard");
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
-        if (action == null) action = "";
-
-        switch (action) {
-            case "caseAssign": handleCaseAssign(req, resp); break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
-        }
-    }
-
-    // ══════════════ ALERTS ══════════════
-
-    private void showAlertList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("alerts", alertDAO.getOpen());
-        req.getRequestDispatcher("/views/alert/alertsList.jsp").forward(req, resp);
-    }
-
-    private void showAlertDetail(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        req.setAttribute("alert", alertDAO.getById(id));
-        req.getRequestDispatcher("/views/alert/alertDetail.jsp").forward(req, resp);
-    }
-
-    private void handleAlertClose(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        alertDAO.updateStatus(id, "Closed");
-        logAction(req, "CLOSE", "AlertEvents", id);
-        resp.sendRedirect(req.getContextPath() + "/main?action=alertList");
-    }
-
-    // ══════════════ CASES ══════════════
-
-    private void showCaseList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("cases", caseDAO.getAll());
-        req.getRequestDispatcher("/views/reconcase/caseList.jsp").forward(req, resp);
-    }
-
-    private void showCaseDetail(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        req.setAttribute("recase", caseDAO.getById(id));
-        req.getRequestDispatcher("/views/reconcase/caseDetail.jsp").forward(req, resp);
-    }
-
-    private void handleCaseAssign(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        int caseId = Integer.parseInt(req.getParameter("caseId"));
-        int userId = Integer.parseInt(req.getParameter("userId"));
-        caseDAO.assignCase(caseId, userId);
-        logAction(req, "UPDATE", "ReconciliationCases", caseId);
-        resp.sendRedirect(req.getContextPath() + "/main?action=caseDetail&id=" + caseId);
-    }
-
-    private void handleCaseClose(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        caseDAO.updateStatus(id, "Closed");
-        logAction(req, "CLOSE", "ReconciliationCases", id);
-        resp.sendRedirect(req.getContextPath() + "/main?action=caseList");
-    }
-
-    // ── Helper ──────────────────────────────────
-    private void logAction(HttpServletRequest req, String action, String table, int id) {
-        User user = (User) req.getSession().getAttribute("loggedUser");
+    private void logAction(HttpServletRequest request, String action, String table, int id) {
+        User user = (User) request.getSession().getAttribute("loggedUser");
         if (user != null) auditDAO.log(user.getUserId(), action, table, id);
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
     }
 }
