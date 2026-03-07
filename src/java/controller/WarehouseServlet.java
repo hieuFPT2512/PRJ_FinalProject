@@ -10,6 +10,8 @@ import dao.WarehouseDAO;
 import model.InboundDocument;
 import model.OutboundDocument;
 import model.User;
+import utils.AuthUtils;
+import utils.RoleConstants;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -19,11 +21,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * WarehouseServlet — Servlet độc lập xử lý nghiệp vụ kho.
- * URL: /warehouse?action=xxx
- *
- * doGet : hiển thị danh sách, form outbound/inbound, stock ledger
- * doPost: lưu outbound, cập nhật outbound, lưu inbound
+ * Phân quyền WarehouseServlet:
+ *   Tất cả action → CHỈ ADMIN (1) và WAREHOUSE_STAFF (3)
+ *   (Kế toán, Tài xế, CSKH không có quyền vào kho)
  */
 @WebServlet("/warehouse")
 public class WarehouseServlet extends HttpServlet {
@@ -36,123 +36,112 @@ public class WarehouseServlet extends HttpServlet {
     private final ProductDAO          productDAO   = new ProductDAO();
     private final AuditLogDAO         auditDAO     = new AuditLogDAO();
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+
+        User loginUser = AuthUtils.getLoginUser(request);
+        if (loginUser == null) { AuthUtils.redirectLogin(request, response); return; }
+
+        // Toàn bộ nghiệp vụ kho: chỉ ADMIN và WAREHOUSE_STAFF
+        if (!AuthUtils.hasRole(loginUser,
+                RoleConstants.ROLE_ADMIN,
+                RoleConstants.ROLE_WAREHOUSE_STAFF)) {
+            AuthUtils.denyAccess(request, response); return;
+        }
+
+        String action = request.getParameter("action");
         if (action == null) action = "";
 
         switch (action) {
-            case "outboundList": showOutboundList(req, resp); break;
-            case "outboundForm": showOutboundForm(req, resp); break;
-            case "inboundList":  showInboundList(req, resp);  break;
-            case "inboundForm":  showInboundForm(req, resp);  break;
-            case "stockLedger":  showStockLedger(req, resp);  break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
+
+            // ══════════════ XUẤT KHO ══════════════
+            case "outboundList":
+                request.setAttribute("outbounds", outboundDAO.getAll());
+                request.getRequestDispatcher("/views/outbound/outboundList.jsp").forward(request, response);
+                break;
+
+            case "outboundForm":
+                request.setAttribute("orders",     orderDAO.getAll());
+                request.setAttribute("warehouses", warehouseDAO.getAll());
+                request.getRequestDispatcher("/views/outbound/outboundForm.jsp").forward(request, response);
+                break;
+
+            case "outboundSave":
+                OutboundDocument od = new OutboundDocument();
+                od.setOrderId(Integer.parseInt(request.getParameter("orderId")));
+                od.setWarehouseId(Integer.parseInt(request.getParameter("warehouseId")));
+                od.setStatus(request.getParameter("status"));
+                outboundDAO.insert(od);
+                logAction(request, "INSERT", "OutboundDocuments", 0);
+                response.sendRedirect(request.getContextPath() + "/main?action=outboundList");
+                break;
+
+            case "outboundUpdate":
+                OutboundDocument ou = new OutboundDocument();
+                ou.setOutboundId(Integer.parseInt(request.getParameter("outboundId")));
+                ou.setStatus(request.getParameter("status"));
+                outboundDAO.update(ou);
+                logAction(request, "UPDATE", "OutboundDocuments", ou.getOutboundId());
+                response.sendRedirect(request.getContextPath() + "/main?action=outboundList");
+                break;
+
+            // ══════════════ NHẬP KHO ══════════════
+            case "inboundList":
+                request.setAttribute("inbounds", inboundDAO.getAll());
+                request.getRequestDispatcher("/views/inbound/inboundList.jsp").forward(request, response);
+                break;
+
+            case "inboundForm":
+                request.setAttribute("orders",     orderDAO.getAll());
+                request.setAttribute("warehouses", warehouseDAO.getAll());
+                request.getRequestDispatcher("/views/inbound/inboundForm.jsp").forward(request, response);
+                break;
+
+            case "inboundSave":
+                InboundDocument ind = new InboundDocument();
+                ind.setOrderId(Integer.parseInt(request.getParameter("orderId")));
+                ind.setWarehouseId(Integer.parseInt(request.getParameter("warehouseId")));
+                ind.setReason(request.getParameter("reason"));
+                inboundDAO.insert(ind);
+                logAction(request, "INSERT", "InboundDocuments", 0);
+                response.sendRedirect(request.getContextPath() + "/main?action=inboundList");
+                break;
+
+            // ══════════════ SỔ CÁI TỒN KHO ══════════════
+            case "stockLedger":
+                String warehouseId = request.getParameter("warehouseId");
+                String productId   = request.getParameter("productId");
+                String refType     = request.getParameter("refType");
+                String fromDate    = request.getParameter("fromDate");
+                String toDate      = request.getParameter("toDate");
+                boolean hasFilter  = (warehouseId != null && !warehouseId.isEmpty())
+                                  || (productId   != null && !productId.isEmpty())
+                                  || (refType     != null && !refType.isEmpty());
+                request.setAttribute("ledgers", hasFilter
+                        ? stockDAO.search(warehouseId, productId, refType, fromDate, toDate)
+                        : stockDAO.getAll());
+                request.setAttribute("warehouses", warehouseDAO.getAll());
+                request.setAttribute("products",   productDAO.getAll());
+                request.getRequestDispatcher("/views/stock/stockLedger.jsp").forward(request, response);
+                break;
+
+            default:
+                response.sendRedirect(request.getContextPath() + "/main?action=dashboard");
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
-        if (action == null) action = "";
-
-        switch (action) {
-            case "outboundSave":   handleOutboundSave(req, resp);   break;
-            case "outboundUpdate": handleOutboundUpdate(req, resp); break;
-            case "inboundSave":    handleInboundSave(req, resp);    break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
-        }
-    }
-
-    // ══════════════ OUTBOUND ══════════════
-
-    private void showOutboundList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("outbounds", outboundDAO.getAll());
-        req.getRequestDispatcher("/views/outbound/outboundList.jsp").forward(req, resp);
-    }
-
-    private void showOutboundForm(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("orders",     orderDAO.getAll());
-        req.setAttribute("warehouses", warehouseDAO.getAll());
-        req.getRequestDispatcher("/views/outbound/outboundForm.jsp").forward(req, resp);
-    }
-
-    private void handleOutboundSave(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        OutboundDocument od = new OutboundDocument();
-        od.setOrderId(Integer.parseInt(req.getParameter("orderId")));
-        od.setWarehouseId(Integer.parseInt(req.getParameter("warehouseId")));
-        od.setStatus(req.getParameter("status"));
-        outboundDAO.insert(od);
-        logAction(req, "INSERT", "OutboundDocuments", 0);
-        resp.sendRedirect(req.getContextPath() + "/main?action=outboundList");
-    }
-
-    private void handleOutboundUpdate(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        OutboundDocument od = new OutboundDocument();
-        od.setOutboundId(Integer.parseInt(req.getParameter("outboundId")));
-        od.setStatus(req.getParameter("status"));
-        outboundDAO.update(od);
-        logAction(req, "UPDATE", "OutboundDocuments", od.getOutboundId());
-        resp.sendRedirect(req.getContextPath() + "/main?action=outboundList");
-    }
-
-    // ══════════════ INBOUND ══════════════
-
-    private void showInboundList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("inbounds", inboundDAO.getAll());
-        req.getRequestDispatcher("/views/inbound/inboundList.jsp").forward(req, resp);
-    }
-
-    private void showInboundForm(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("orders",     orderDAO.getAll());
-        req.setAttribute("warehouses", warehouseDAO.getAll());
-        req.getRequestDispatcher("/views/inbound/inboundForm.jsp").forward(req, resp);
-    }
-
-    private void handleInboundSave(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        InboundDocument ind = new InboundDocument();
-        ind.setOrderId(Integer.parseInt(req.getParameter("orderId")));
-        ind.setWarehouseId(Integer.parseInt(req.getParameter("warehouseId")));
-        ind.setReason(req.getParameter("reason"));
-        inboundDAO.insert(ind);
-        logAction(req, "INSERT", "InboundDocuments", 0);
-        resp.sendRedirect(req.getContextPath() + "/main?action=inboundList");
-    }
-
-    // ══════════════ STOCK LEDGER ══════════════
-
-    private void showStockLedger(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        String warehouseId = req.getParameter("warehouseId");
-        String productId   = req.getParameter("productId");
-        String refType     = req.getParameter("refType");
-        String fromDate    = req.getParameter("fromDate");
-        String toDate      = req.getParameter("toDate");
-        boolean hasFilter  = (warehouseId != null && !warehouseId.isEmpty())
-                          || (productId   != null && !productId.isEmpty())
-                          || (refType     != null && !refType.isEmpty());
-        req.setAttribute("ledgers",    hasFilter
-                ? stockDAO.search(warehouseId, productId, refType, fromDate, toDate)
-                : stockDAO.getAll());
-        req.setAttribute("warehouses", warehouseDAO.getAll());
-        req.setAttribute("products",   productDAO.getAll());
-        req.getRequestDispatcher("/views/stock/stockLedger.jsp").forward(req, resp);
-    }
-
-    // ── Helper ──────────────────────────────────
-    private void logAction(HttpServletRequest req, String action, String table, int id) {
-        User user = (User) req.getSession().getAttribute("loggedUser");
+    private void logAction(HttpServletRequest request, String action, String table, int id) {
+        User user = (User) request.getSession().getAttribute("loggedUser");
         if (user != null) auditDAO.log(user.getUserId(), action, table, id);
     }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException { processRequest(request, response); }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException { processRequest(request, response); }
 }

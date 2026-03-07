@@ -11,6 +11,8 @@ import model.DeliveryOrder;
 import model.ProofOfDelivery;
 import model.Shipment;
 import model.User;
+import utils.AuthUtils;
+import utils.RoleConstants;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -22,192 +24,252 @@ import java.io.IOException;
 import java.math.BigDecimal;
 
 /**
- * DeliveryServlet — Servlet độc lập xử lý vận chuyển.
- * URL: /delivery?action=xxx
+ * Phân quyền DeliveryServlet:
  *
- * doGet : hiển thị danh sách, form, chi tiết, xử lý delete
- * doPost: lưu order, shipment, POD upload/confirm
+ *   Đơn giao hàng (order):
+ *     orderList / orderDetail → ADMIN, WAREHOUSE_STAFF, DRIVER, CUSTOMER_SERVICE
+ *     orderForm / orderSave / orderDelete → ADMIN, WAREHOUSE_STAFF, CUSTOMER_SERVICE
+ *
+ *   Lô hàng (shipment):
+ *     shipmentList → ADMIN, WAREHOUSE_STAFF, DRIVER, CUSTOMER_SERVICE
+ *     shipmentForm / shipmentSave → ADMIN, WAREHOUSE_STAFF
+ *     shipmentUpdate (cập nhật trạng thái) → ADMIN, WAREHOUSE_STAFF, DRIVER
+ *
+ *   Bằng chứng giao hàng (POD):
+ *     podList → ADMIN, WAREHOUSE_STAFF, DRIVER
+ *     podUpload (GET form) → ADMIN, WAREHOUSE_STAFF, DRIVER
+ *     podUpload (POST lưu) → ADMIN, WAREHOUSE_STAFF, DRIVER
+ *     podConfirm (xác nhận) → ADMIN, WAREHOUSE_STAFF
  */
 @WebServlet("/delivery")
 @MultipartConfig
 public class DeliveryServlet extends HttpServlet {
 
-    private final DeliveryOrderDAO   orderDAO    = new DeliveryOrderDAO();
-    private final ShipmentDAO        shipmentDAO = new ShipmentDAO();
-    private final ProofOfDeliveryDAO podDAO      = new ProofOfDeliveryDAO();
-    private final CustomerDAO        customerDAO = new CustomerDAO();
-    private final WarehouseDAO       warehouseDAO= new WarehouseDAO();
-    private final ProductDAO         productDAO  = new ProductDAO();
-    private final AuditLogDAO        auditDAO    = new AuditLogDAO();
+    private final DeliveryOrderDAO   orderDAO     = new DeliveryOrderDAO();
+    private final ShipmentDAO        shipmentDAO  = new ShipmentDAO();
+    private final ProofOfDeliveryDAO podDAO       = new ProofOfDeliveryDAO();
+    private final CustomerDAO        customerDAO  = new CustomerDAO();
+    private final WarehouseDAO       warehouseDAO = new WarehouseDAO();
+    private final ProductDAO         productDAO   = new ProductDAO();
+    private final AuditLogDAO        auditDAO     = new AuditLogDAO();
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+
+        User loginUser = AuthUtils.getLoginUser(request);
+        if (loginUser == null) { AuthUtils.redirectLogin(request, response); return; }
+
+        String action = request.getParameter("action");
         if (action == null) action = "";
 
         switch (action) {
-            case "orderList":    showOrderList(req, resp);    break;
-            case "orderForm":    showOrderForm(req, resp);    break;
-            case "orderDetail":  showOrderDetail(req, resp);  break;
-            case "orderDelete":  handleOrderDelete(req, resp); break;
-            case "shipmentList": showShipmentList(req, resp); break;
-            case "shipmentForm": showShipmentForm(req, resp); break;
-            case "podList":      showPodList(req, resp);      break;
-            case "podUpload":    showPodUploadForm(req, resp);break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
+
+            // ══════════════ ĐƠN GIAO HÀNG ══════════════
+
+            case "orderList":
+                // ADMIN, WAREHOUSE_STAFF, DRIVER (chỉ xem), CUSTOMER_SERVICE
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF,
+                        RoleConstants.ROLE_DRIVER,
+                        RoleConstants.ROLE_CUSTOMER_SERVICE)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                request.setAttribute("orders", orderDAO.getAll());
+                request.getRequestDispatcher("/views/order/orderList.jsp").forward(request, response);
+                break;
+
+            case "orderForm":
+                // ADMIN, WAREHOUSE_STAFF, CUSTOMER_SERVICE được tạo/sửa
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF,
+                        RoleConstants.ROLE_CUSTOMER_SERVICE)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                String oFormId = request.getParameter("id");
+                if (oFormId != null && !oFormId.isEmpty())
+                    request.setAttribute("order", orderDAO.getById(Integer.parseInt(oFormId)));
+                request.setAttribute("customers",  customerDAO.getAll());
+                request.setAttribute("warehouses", warehouseDAO.getAll());
+                request.setAttribute("products",   productDAO.getAll());
+                request.getRequestDispatcher("/views/order/orderForm.jsp").forward(request, response);
+                break;
+
+            case "orderDetail":
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF,
+                        RoleConstants.ROLE_DRIVER,
+                        RoleConstants.ROLE_CUSTOMER_SERVICE)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                request.setAttribute("order", orderDAO.getById(Integer.parseInt(request.getParameter("id"))));
+                request.getRequestDispatcher("/views/order/orderDetail.jsp").forward(request, response);
+                break;
+
+            case "orderSave":
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF,
+                        RoleConstants.ROLE_CUSTOMER_SERVICE)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                DeliveryOrder o = new DeliveryOrder();
+                String oSaveId = request.getParameter("orderId");
+                o.setCustomerId(Integer.parseInt(request.getParameter("customerId")));
+                o.setWarehouseId(Integer.parseInt(request.getParameter("warehouseId")));
+                o.setRoute(request.getParameter("route"));
+                o.setHasCod(request.getParameter("hasCod"));
+                o.setTotalAmount(new BigDecimal(request.getParameter("totalAmount")));
+                o.setStatus(request.getParameter("status"));
+                if (oSaveId != null && !oSaveId.isEmpty()) {
+                    o.setOrderId(Integer.parseInt(oSaveId));
+                    orderDAO.update(o);
+                    logAction(request, "UPDATE", "DeliveryOrders", o.getOrderId());
+                } else {
+                    int newId = orderDAO.insert(o);
+                    logAction(request, "INSERT", "DeliveryOrders", newId);
+                }
+                response.sendRedirect(request.getContextPath() + "/main?action=orderList");
+                break;
+
+            case "orderDelete":
+                // Chỉ ADMIN được xóa đơn
+                if (!AuthUtils.hasRole(loginUser, RoleConstants.ROLE_ADMIN)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                int oDelId = Integer.parseInt(request.getParameter("id"));
+                orderDAO.delete(oDelId);
+                logAction(request, "DELETE", "DeliveryOrders", oDelId);
+                response.sendRedirect(request.getContextPath() + "/main?action=orderList");
+                break;
+
+            // ══════════════ LÔ HÀNG ══════════════
+
+            case "shipmentList":
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF,
+                        RoleConstants.ROLE_DRIVER,
+                        RoleConstants.ROLE_CUSTOMER_SERVICE)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                request.setAttribute("shipments", shipmentDAO.getAll());
+                request.getRequestDispatcher("/views/shipment/shipmentList.jsp").forward(request, response);
+                break;
+
+            case "shipmentForm":
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                request.setAttribute("orders", orderDAO.getAll());
+                request.getRequestDispatcher("/views/shipment/shipmentForm.jsp").forward(request, response);
+                break;
+
+            case "shipmentSave":
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                Shipment s = new Shipment();
+                s.setOrderId(Integer.parseInt(request.getParameter("orderId")));
+                s.setDriverName(request.getParameter("driverName"));
+                s.setStatus("Shipping");
+                shipmentDAO.insert(s);
+                logAction(request, "INSERT", "Shipments", 0);
+                response.sendRedirect(request.getContextPath() + "/main?action=shipmentList");
+                break;
+
+            case "shipmentUpdate":
+                // Tài xế cũng được cập nhật trạng thái lô hàng của mình
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF,
+                        RoleConstants.ROLE_DRIVER)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                Shipment su = new Shipment();
+                su.setShipmentId(Integer.parseInt(request.getParameter("shipmentId")));
+                su.setDriverName(request.getParameter("driverName"));
+                su.setStatus(request.getParameter("status"));
+                shipmentDAO.update(su);
+                logAction(request, "UPDATE", "Shipments", su.getShipmentId());
+                response.sendRedirect(request.getContextPath() + "/main?action=shipmentList");
+                break;
+
+            // ══════════════ BẰNG CHỨNG GIAO HÀNG ══════════════
+
+            case "podList":
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF,
+                        RoleConstants.ROLE_DRIVER)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                request.setAttribute("pods", podDAO.getAll());
+                request.getRequestDispatcher("/views/pod/podList.jsp").forward(request, response);
+                break;
+
+            case "podUpload":
+                // Tài xế upload POD của mình
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF,
+                        RoleConstants.ROLE_DRIVER)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                if ("POST".equalsIgnoreCase(request.getMethod())) {
+                    ProofOfDelivery pod = new ProofOfDelivery();
+                    pod.setShipmentId(Integer.parseInt(request.getParameter("shipmentId")));
+                    pod.setSignedBy(request.getParameter("signedBy"));
+                    pod.setImageUrl(request.getParameter("imageUrl"));
+                    pod.setStatus("Pending");
+                    podDAO.insert(pod);
+                    logAction(request, "INSERT", "ProofOfDeliveries", 0);
+                    response.sendRedirect(request.getContextPath() + "/main?action=podList");
+                } else {
+                    request.setAttribute("shipments", shipmentDAO.getAll());
+                    request.getRequestDispatcher("/views/pod/podUpload.jsp").forward(request, response);
+                }
+                break;
+
+            case "podConfirm":
+                // Chỉ ADMIN và Thủ kho xác nhận POD
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
+                ProofOfDelivery pc = new ProofOfDelivery();
+                pc.setPodId(Integer.parseInt(request.getParameter("podId")));
+                pc.setSignedBy(request.getParameter("signedBy"));
+                pc.setStatus("Completed");
+                podDAO.update(pc);
+                logAction(request, "UPDATE", "ProofOfDeliveries", pc.getPodId());
+                response.sendRedirect(request.getContextPath() + "/main?action=podList");
+                break;
+
+            default:
+                response.sendRedirect(request.getContextPath() + "/main?action=dashboard");
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
-        if (action == null) action = "";
-
-        switch (action) {
-            case "orderSave":      handleOrderSave(req, resp);      break;
-            case "shipmentSave":   handleShipmentSave(req, resp);   break;
-            case "shipmentUpdate": handleShipmentUpdate(req, resp); break;
-            case "podUpload":      handlePodUpload(req, resp);      break;
-            case "podConfirm":     handlePodConfirm(req, resp);     break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
-        }
-    }
-
-    // ══════════════ ORDERS ══════════════
-
-    private void showOrderList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("orders", orderDAO.getAll());
-        req.getRequestDispatcher("/views/order/orderList.jsp").forward(req, resp);
-    }
-
-    private void showOrderForm(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        String id = req.getParameter("id");
-        if (id != null && !id.isEmpty())
-            req.setAttribute("order", orderDAO.getById(Integer.parseInt(id)));
-        req.setAttribute("customers",  customerDAO.getAll());
-        req.setAttribute("warehouses", warehouseDAO.getAll());
-        req.setAttribute("products",   productDAO.getAll());
-        req.getRequestDispatcher("/views/order/orderForm.jsp").forward(req, resp);
-    }
-
-    private void showOrderDetail(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        req.setAttribute("order", orderDAO.getById(id));
-        req.getRequestDispatcher("/views/order/orderDetail.jsp").forward(req, resp);
-    }
-
-    private void handleOrderSave(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        DeliveryOrder o = new DeliveryOrder();
-        String id = req.getParameter("orderId");
-        o.setCustomerId(Integer.parseInt(req.getParameter("customerId")));
-        o.setWarehouseId(Integer.parseInt(req.getParameter("warehouseId")));
-        o.setRoute(req.getParameter("route"));
-        o.setHasCod(req.getParameter("hasCod"));
-        o.setTotalAmount(new BigDecimal(req.getParameter("totalAmount")));
-        o.setStatus(req.getParameter("status"));
-        if (id != null && !id.isEmpty()) {
-            o.setOrderId(Integer.parseInt(id));
-            orderDAO.update(o);
-            logAction(req, "UPDATE", "DeliveryOrders", o.getOrderId());
-        } else {
-            int newId = orderDAO.insert(o);
-            logAction(req, "INSERT", "DeliveryOrders", newId);
-        }
-        resp.sendRedirect(req.getContextPath() + "/main?action=orderList");
-    }
-
-    private void handleOrderDelete(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        orderDAO.delete(id);
-        logAction(req, "DELETE", "DeliveryOrders", id);
-        resp.sendRedirect(req.getContextPath() + "/main?action=orderList");
-    }
-
-    // ══════════════ SHIPMENTS ══════════════
-
-    private void showShipmentList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("shipments", shipmentDAO.getAll());
-        req.getRequestDispatcher("/views/shipment/shipmentList.jsp").forward(req, resp);
-    }
-
-    private void showShipmentForm(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("orders", orderDAO.getAll());
-        req.getRequestDispatcher("/views/shipment/shipmentForm.jsp").forward(req, resp);
-    }
-
-    private void handleShipmentSave(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        Shipment s = new Shipment();
-        s.setOrderId(Integer.parseInt(req.getParameter("orderId")));
-        s.setDriverName(req.getParameter("driverName"));
-        s.setStatus("Shipping");
-        shipmentDAO.insert(s);
-        logAction(req, "INSERT", "Shipments", 0);
-        resp.sendRedirect(req.getContextPath() + "/main?action=shipmentList");
-    }
-
-    private void handleShipmentUpdate(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        Shipment s = new Shipment();
-        s.setShipmentId(Integer.parseInt(req.getParameter("shipmentId")));
-        s.setDriverName(req.getParameter("driverName"));
-        s.setStatus(req.getParameter("status"));
-        shipmentDAO.update(s);
-        logAction(req, "UPDATE", "Shipments", s.getShipmentId());
-        resp.sendRedirect(req.getContextPath() + "/main?action=shipmentList");
-    }
-
-    // ══════════════ POD ══════════════
-
-    private void showPodList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("pods", podDAO.getAll());
-        req.getRequestDispatcher("/views/pod/podList.jsp").forward(req, resp);
-    }
-
-    private void showPodUploadForm(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("shipments", shipmentDAO.getAll());
-        req.getRequestDispatcher("/views/pod/podUpload.jsp").forward(req, resp);
-    }
-
-    private void handlePodUpload(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        ProofOfDelivery pod = new ProofOfDelivery();
-        pod.setShipmentId(Integer.parseInt(req.getParameter("shipmentId")));
-        pod.setSignedBy(req.getParameter("signedBy"));
-        pod.setImageUrl(req.getParameter("imageUrl"));
-        pod.setStatus("Pending");
-        podDAO.insert(pod);
-        logAction(req, "INSERT", "ProofOfDeliveries", 0);
-        resp.sendRedirect(req.getContextPath() + "/main?action=podList");
-    }
-
-    private void handlePodConfirm(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        ProofOfDelivery pod = new ProofOfDelivery();
-        pod.setPodId(Integer.parseInt(req.getParameter("podId")));
-        pod.setSignedBy(req.getParameter("signedBy"));
-        pod.setStatus("Completed");
-        podDAO.update(pod);
-        logAction(req, "UPDATE", "ProofOfDeliveries", pod.getPodId());
-        resp.sendRedirect(req.getContextPath() + "/main?action=podList");
-    }
-
-    // ── Helper ──────────────────────────────────
-    private void logAction(HttpServletRequest req, String action, String table, int id) {
-        User user = (User) req.getSession().getAttribute("loggedUser");
+    private void logAction(HttpServletRequest request, String action, String table, int id) {
+        User user = (User) request.getSession().getAttribute("loggedUser");
         if (user != null) auditDAO.log(user.getUserId(), action, table, id);
     }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException { processRequest(request, response); }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException { processRequest(request, response); }
 }

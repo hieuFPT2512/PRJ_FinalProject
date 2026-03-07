@@ -8,6 +8,8 @@ import model.CodReconciliation;
 import model.Invoice;
 import model.Payment;
 import model.User;
+import utils.AuthUtils;
+import utils.RoleConstants;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -18,121 +20,110 @@ import java.io.IOException;
 import java.math.BigDecimal;
 
 /**
- * AccountingServlet — Servlet độc lập xử lý kế toán.
- * URL: /accounting?action=xxx
- *
- * doGet : hiển thị danh sách invoice, chi tiết invoice, danh sách payment, COD list
- * doPost: cập nhật invoice, lưu payment, cập nhật COD
+ * Phân quyền AccountingServlet:
+ *   invoiceList / invoiceDetail / paymentList / codList (xem) → ADMIN, ACCOUNTANT
+ *   invoiceUpdate / paymentSave / codUpdate (thao tác)        → ADMIN, ACCOUNTANT
+ *   (Thủ kho, Tài xế, CSKH không được vào kế toán)
  */
 @WebServlet("/accounting")
 public class AccountingServlet extends HttpServlet {
 
-    private final InvoiceDAO          invoiceDAO = new InvoiceDAO();
-    private final PaymentDAO          paymentDAO = new PaymentDAO();
-    private final CodReconciliationDAO codDAO    = new CodReconciliationDAO();
-    private final AuditLogDAO         auditDAO   = new AuditLogDAO();
+    private final InvoiceDAO           invoiceDAO = new InvoiceDAO();
+    private final PaymentDAO           paymentDAO = new PaymentDAO();
+    private final CodReconciliationDAO codDAO     = new CodReconciliationDAO();
+    private final AuditLogDAO          auditDAO   = new AuditLogDAO();
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+
+        User loginUser = AuthUtils.getLoginUser(request);
+        if (loginUser == null) { AuthUtils.redirectLogin(request, response); return; }
+
+        // Toàn bộ kế toán: chỉ ADMIN và ACCOUNTANT
+        if (!AuthUtils.hasRole(loginUser,
+                RoleConstants.ROLE_ADMIN,
+                RoleConstants.ROLE_ACCOUNTANT)) {
+            AuthUtils.denyAccess(request, response); return;
+        }
+
+        String action = request.getParameter("action");
         if (action == null) action = "";
 
         switch (action) {
-            case "invoiceList":   showInvoiceList(req, resp);   break;
-            case "invoiceDetail": showInvoiceDetail(req, resp); break;
-            case "paymentList":   showPaymentList(req, resp);   break;
-            case "codList":       showCodList(req, resp);       break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
+
+            // ══════════════ HÓA ĐƠN ══════════════
+            case "invoiceList":
+                request.setAttribute("invoices", invoiceDAO.getAll());
+                request.getRequestDispatcher("/views/invoice/invoiceList.jsp").forward(request, response);
+                break;
+
+            case "invoiceDetail":
+                request.setAttribute("invoice", invoiceDAO.getById(Integer.parseInt(request.getParameter("id"))));
+                request.getRequestDispatcher("/views/invoice/invoiceDetail.jsp").forward(request, response);
+                break;
+
+            case "invoiceUpdate":
+                Invoice inv = new Invoice();
+                inv.setInvoiceId(Integer.parseInt(request.getParameter("invoiceId")));
+                inv.setStatus(request.getParameter("status"));
+                invoiceDAO.update(inv);
+                logAction(request, "UPDATE", "Invoices", inv.getInvoiceId());
+                response.sendRedirect(request.getContextPath() + "/main?action=invoiceList");
+                break;
+
+            // ══════════════ THANH TOÁN ══════════════
+            case "paymentList":
+                request.setAttribute("payments", paymentDAO.getAll());
+                request.setAttribute("invoices", invoiceDAO.getAll());
+                request.getRequestDispatcher("/views/payment/paymentList.jsp").forward(request, response);
+                break;
+
+            case "paymentSave":
+                Payment pay = new Payment();
+                pay.setInvoiceId(Integer.parseInt(request.getParameter("invoiceId")));
+                pay.setAmount(new BigDecimal(request.getParameter("amount")));
+                pay.setMethod(request.getParameter("method"));
+                paymentDAO.insert(pay);
+                logAction(request, "INSERT", "Payments", 0);
+                // Tự động đánh dấu hóa đơn Paid
+                Invoice paidInv = invoiceDAO.getById(pay.getInvoiceId());
+                if (paidInv != null) { paidInv.setStatus("Paid"); invoiceDAO.update(paidInv); }
+                response.sendRedirect(request.getContextPath() + "/main?action=paymentList");
+                break;
+
+            // ══════════════ ĐỐI SOÁT COD ══════════════
+            case "codList":
+                request.setAttribute("cods", codDAO.getAll());
+                request.getRequestDispatcher("/views/cod/codList.jsp").forward(request, response);
+                break;
+
+            case "codUpdate":
+                CodReconciliation cr = new CodReconciliation();
+                cr.setCodId(Integer.parseInt(request.getParameter("codId")));
+                cr.setReceivedCod(new BigDecimal(request.getParameter("receivedCod")));
+                cr.setStatus(request.getParameter("status"));
+                codDAO.update(cr);
+                logAction(request, "UPDATE", "CodReconciliations", cr.getCodId());
+                response.sendRedirect(request.getContextPath() + "/main?action=codList");
+                break;
+
+            default:
+                response.sendRedirect(request.getContextPath() + "/main?action=dashboard");
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
-        if (action == null) action = "";
-
-        switch (action) {
-            case "invoiceUpdate": handleInvoiceUpdate(req, resp); break;
-            case "paymentSave":   handlePaymentSave(req, resp);   break;
-            case "codUpdate":     handleCodUpdate(req, resp);     break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
-        }
-    }
-
-    // ══════════════ INVOICE ══════════════
-
-    private void showInvoiceList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("invoices", invoiceDAO.getAll());
-        req.getRequestDispatcher("/views/invoice/invoiceList.jsp").forward(req, resp);
-    }
-
-    private void showInvoiceDetail(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        req.setAttribute("invoice", invoiceDAO.getById(id));
-        req.getRequestDispatcher("/views/invoice/invoiceDetail.jsp").forward(req, resp);
-    }
-
-    private void handleInvoiceUpdate(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        Invoice inv = new Invoice();
-        inv.setInvoiceId(Integer.parseInt(req.getParameter("invoiceId")));
-        inv.setStatus(req.getParameter("status"));
-        invoiceDAO.update(inv);
-        logAction(req, "UPDATE", "Invoices", inv.getInvoiceId());
-        resp.sendRedirect(req.getContextPath() + "/main?action=invoiceList");
-    }
-
-    // ══════════════ PAYMENT ══════════════
-
-    private void showPaymentList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("payments", paymentDAO.getAll());
-        req.setAttribute("invoices", invoiceDAO.getAll());
-        req.getRequestDispatcher("/views/payment/paymentList.jsp").forward(req, resp);
-    }
-
-    private void handlePaymentSave(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        Payment pay = new Payment();
-        pay.setInvoiceId(Integer.parseInt(req.getParameter("invoiceId")));
-        pay.setAmount(new BigDecimal(req.getParameter("amount")));
-        pay.setMethod(req.getParameter("method"));
-        paymentDAO.insert(pay);
-        logAction(req, "INSERT", "Payments", 0);
-        // Tự động đánh dấu hóa đơn Paid
-        Invoice inv = invoiceDAO.getById(pay.getInvoiceId());
-        if (inv != null) { inv.setStatus("Paid"); invoiceDAO.update(inv); }
-        resp.sendRedirect(req.getContextPath() + "/main?action=paymentList");
-    }
-
-    // ══════════════ COD ══════════════
-
-    private void showCodList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("cods", codDAO.getAll());
-        req.getRequestDispatcher("/views/cod/codList.jsp").forward(req, resp);
-    }
-
-    private void handleCodUpdate(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        CodReconciliation cr = new CodReconciliation();
-        cr.setCodId(Integer.parseInt(req.getParameter("codId")));
-        cr.setReceivedCod(new BigDecimal(req.getParameter("receivedCod")));
-        cr.setStatus(req.getParameter("status"));
-        codDAO.update(cr);
-        logAction(req, "UPDATE", "CodReconciliations", cr.getCodId());
-        resp.sendRedirect(req.getContextPath() + "/main?action=codList");
-    }
-
-    // ── Helper ──────────────────────────────────
-    private void logAction(HttpServletRequest req, String action, String table, int id) {
-        User user = (User) req.getSession().getAttribute("loggedUser");
+    private void logAction(HttpServletRequest request, String action, String table, int id) {
+        User user = (User) request.getSession().getAttribute("loggedUser");
         if (user != null) auditDAO.log(user.getUserId(), action, table, id);
     }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException { processRequest(request, response); }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException { processRequest(request, response); }
 }

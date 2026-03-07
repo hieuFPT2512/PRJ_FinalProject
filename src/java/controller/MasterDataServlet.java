@@ -8,6 +8,8 @@ import model.Customer;
 import model.Product;
 import model.User;
 import model.Warehouse;
+import utils.AuthUtils;
+import utils.RoleConstants;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -18,11 +20,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 
 /**
- * MasterDataServlet — Servlet độc lập xử lý CRUD danh mục.
- * URL: /masterdata?action=xxx
- *
- * doGet : hiển thị danh sách, form, xử lý delete
- * doPost: lưu (insert/update) customer, product, warehouse
+ * Phân quyền MasterDataServlet:
+ *   *List / *Form (xem)  → ADMIN, WAREHOUSE_STAFF, CUSTOMER_SERVICE
+ *   *Save / *Delete      → ADMIN, WAREHOUSE_STAFF
  */
 @WebServlet("/masterdata")
 public class MasterDataServlet extends HttpServlet {
@@ -32,177 +32,177 @@ public class MasterDataServlet extends HttpServlet {
     private final WarehouseDAO warehouseDAO = new WarehouseDAO();
     private final AuditLogDAO  auditDAO     = new AuditLogDAO();
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    // Role được phép XEM danh mục
+    private static final int[] CAN_VIEW   = {
+        RoleConstants.ROLE_ADMIN,
+        RoleConstants.ROLE_WAREHOUSE_STAFF,
+        RoleConstants.ROLE_CUSTOMER_SERVICE
+    };
+    // Role được phép SỬA / XÓA danh mục
+    private static final int[] CAN_EDIT   = {
+        RoleConstants.ROLE_ADMIN,
+        RoleConstants.ROLE_WAREHOUSE_STAFF
+    };
+
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+
+        User loginUser = AuthUtils.getLoginUser(request);
+        if (loginUser == null) { AuthUtils.redirectLogin(request, response); return; }
+
+        // Tất cả action đều cần ít nhất quyền XEM
+        if (!AuthUtils.hasRole(loginUser, CAN_VIEW)) {
+            AuthUtils.denyAccess(request, response); return;
+        }
+
+        String action = request.getParameter("action");
         if (action == null) action = "";
 
         switch (action) {
-            case "customerList":     showCustomerList(req, resp);     break;
-            case "customerForm":     showCustomerForm(req, resp);     break;
-            case "customerDelete":   handleCustomerDelete(req, resp); break;
-            case "productList":      showProductList(req, resp);      break;
-            case "productForm":      showProductForm(req, resp);      break;
-            case "productDelete":    handleProductDelete(req, resp);  break;
-            case "warehouseList":    showWarehouseList(req, resp);    break;
-            case "warehouseForm":    showWarehouseForm(req, resp);    break;
-            case "warehouseDelete":  handleWarehouseDelete(req, resp);break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
+
+            // ══════════════ CUSTOMER ══════════════
+            case "customerList":
+                String kw = request.getParameter("keyword");
+                request.setAttribute("customers", (kw != null && !kw.isEmpty())
+                        ? customerDAO.search(kw) : customerDAO.getAll());
+                request.setAttribute("keyword", kw);
+                request.getRequestDispatcher("/views/customer/customerList.jsp").forward(request, response);
+                break;
+
+            case "customerForm":
+                String custId = request.getParameter("id");
+                if (custId != null && !custId.isEmpty())
+                    request.setAttribute("customer", customerDAO.getById(Integer.parseInt(custId)));
+                request.setAttribute("canEdit", AuthUtils.hasRole(loginUser, CAN_EDIT));
+                request.getRequestDispatcher("/views/customer/customerForm.jsp").forward(request, response);
+                break;
+
+            case "customerSave":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
+                Customer c = new Customer();
+                String cId = request.getParameter("customerId");
+                c.setCustomerName(request.getParameter("customerName"));
+                c.setPhone(request.getParameter("phone"));
+                c.setEmail(request.getParameter("email"));
+                c.setAddress(request.getParameter("address"));
+                if (cId != null && !cId.isEmpty()) {
+                    c.setCustomerId(Integer.parseInt(cId));
+                    customerDAO.update(c);
+                    logAction(request, "UPDATE", "Customers", c.getCustomerId());
+                } else {
+                    customerDAO.insert(c);
+                    logAction(request, "INSERT", "Customers", 0);
+                }
+                response.sendRedirect(request.getContextPath() + "/main?action=customerList");
+                break;
+
+            case "customerDelete":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
+                int cDelId = Integer.parseInt(request.getParameter("id"));
+                customerDAO.delete(cDelId);
+                logAction(request, "DELETE", "Customers", cDelId);
+                response.sendRedirect(request.getContextPath() + "/main?action=customerList");
+                break;
+
+            // ══════════════ PRODUCT ══════════════
+            case "productList":
+                request.setAttribute("products", productDAO.getAll());
+                request.getRequestDispatcher("/views/product/productList.jsp").forward(request, response);
+                break;
+
+            case "productForm":
+                String prodId = request.getParameter("id");
+                if (prodId != null && !prodId.isEmpty())
+                    request.setAttribute("product", productDAO.getById(Integer.parseInt(prodId)));
+                request.setAttribute("canEdit", AuthUtils.hasRole(loginUser, CAN_EDIT));
+                request.getRequestDispatcher("/views/product/productForm.jsp").forward(request, response);
+                break;
+
+            case "productSave":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
+                Product p = new Product();
+                String pId = request.getParameter("productId");
+                p.setSku(request.getParameter("sku"));
+                p.setProductName(request.getParameter("productName"));
+                p.setCategory(request.getParameter("category"));
+                p.setUnit(request.getParameter("unit"));
+                p.setPrice(new BigDecimal(request.getParameter("price")));
+                if (pId != null && !pId.isEmpty()) {
+                    p.setProductId(Integer.parseInt(pId));
+                    productDAO.update(p);
+                    logAction(request, "UPDATE", "Products", p.getProductId());
+                } else {
+                    productDAO.insert(p);
+                    logAction(request, "INSERT", "Products", 0);
+                }
+                response.sendRedirect(request.getContextPath() + "/main?action=productList");
+                break;
+
+            case "productDelete":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
+                int pDelId = Integer.parseInt(request.getParameter("id"));
+                productDAO.delete(pDelId);
+                logAction(request, "DELETE", "Products", pDelId);
+                response.sendRedirect(request.getContextPath() + "/main?action=productList");
+                break;
+
+            // ══════════════ WAREHOUSE ══════════════
+            case "warehouseList":
+                request.setAttribute("warehouses", warehouseDAO.getAll());
+                request.getRequestDispatcher("/views/warehouse/warehouseList.jsp").forward(request, response);
+                break;
+
+            case "warehouseForm":
+                String whId = request.getParameter("id");
+                if (whId != null && !whId.isEmpty())
+                    request.setAttribute("warehouse", warehouseDAO.getById(Integer.parseInt(whId)));
+                request.setAttribute("canEdit", AuthUtils.hasRole(loginUser, CAN_EDIT));
+                request.getRequestDispatcher("/views/warehouse/warehouseForm.jsp").forward(request, response);
+                break;
+
+            case "warehouseSave":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
+                Warehouse w = new Warehouse();
+                String wId = request.getParameter("warehouseId");
+                w.setWarehouseName(request.getParameter("warehouseName"));
+                w.setLocation(request.getParameter("location"));
+                w.setManager(request.getParameter("manager"));
+                if (wId != null && !wId.isEmpty()) {
+                    w.setWarehouseId(Integer.parseInt(wId));
+                    warehouseDAO.update(w);
+                    logAction(request, "UPDATE", "Warehouses", w.getWarehouseId());
+                } else {
+                    warehouseDAO.insert(w);
+                    logAction(request, "INSERT", "Warehouses", 0);
+                }
+                response.sendRedirect(request.getContextPath() + "/main?action=warehouseList");
+                break;
+
+            case "warehouseDelete":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
+                int wDelId = Integer.parseInt(request.getParameter("id"));
+                warehouseDAO.delete(wDelId);
+                logAction(request, "DELETE", "Warehouses", wDelId);
+                response.sendRedirect(request.getContextPath() + "/main?action=warehouseList");
+                break;
+
+            default:
+                response.sendRedirect(request.getContextPath() + "/main?action=dashboard");
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
-        if (action == null) action = "";
-
-        switch (action) {
-            case "customerSave":  handleCustomerSave(req, resp);  break;
-            case "productSave":   handleProductSave(req, resp);   break;
-            case "warehouseSave": handleWarehouseSave(req, resp); break;
-            default: resp.sendRedirect(req.getContextPath() + "/main");
-        }
-    }
-
-    // ══════════════ CUSTOMER ══════════════
-
-    private void showCustomerList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        String kw = req.getParameter("keyword");
-        req.setAttribute("customers", (kw != null && !kw.isEmpty())
-                ? customerDAO.search(kw) : customerDAO.getAll());
-        req.setAttribute("keyword", kw);
-        req.getRequestDispatcher("/views/customer/customerList.jsp").forward(req, resp);
-    }
-
-    private void showCustomerForm(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        String id = req.getParameter("id");
-        if (id != null && !id.isEmpty())
-            req.setAttribute("customer", customerDAO.getById(Integer.parseInt(id)));
-        req.getRequestDispatcher("/views/customer/customerForm.jsp").forward(req, resp);
-    }
-
-    private void handleCustomerSave(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        Customer c = new Customer();
-        String id = req.getParameter("customerId");
-        c.setCustomerName(req.getParameter("customerName"));
-        c.setPhone(req.getParameter("phone"));
-        c.setEmail(req.getParameter("email"));
-        c.setAddress(req.getParameter("address"));
-        if (id != null && !id.isEmpty()) {
-            c.setCustomerId(Integer.parseInt(id));
-            customerDAO.update(c);
-            logAction(req, "UPDATE", "Customers", c.getCustomerId());
-        } else {
-            customerDAO.insert(c);
-            logAction(req, "INSERT", "Customers", 0);
-        }
-        resp.sendRedirect(req.getContextPath() + "/main?action=customerList");
-    }
-
-    private void handleCustomerDelete(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        customerDAO.delete(id);
-        logAction(req, "DELETE", "Customers", id);
-        resp.sendRedirect(req.getContextPath() + "/main?action=customerList");
-    }
-
-    // ══════════════ PRODUCT ══════════════
-
-    private void showProductList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("products", productDAO.getAll());
-        req.getRequestDispatcher("/views/product/productList.jsp").forward(req, resp);
-    }
-
-    private void showProductForm(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        String id = req.getParameter("id");
-        if (id != null && !id.isEmpty())
-            req.setAttribute("product", productDAO.getById(Integer.parseInt(id)));
-        req.getRequestDispatcher("/views/product/productForm.jsp").forward(req, resp);
-    }
-
-    private void handleProductSave(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        Product p = new Product();
-        String id = req.getParameter("productId");
-        p.setSku(req.getParameter("sku"));
-        p.setProductName(req.getParameter("productName"));
-        p.setCategory(req.getParameter("category"));
-        p.setUnit(req.getParameter("unit"));
-        p.setPrice(new BigDecimal(req.getParameter("price")));
-        if (id != null && !id.isEmpty()) {
-            p.setProductId(Integer.parseInt(id));
-            productDAO.update(p);
-            logAction(req, "UPDATE", "Products", p.getProductId());
-        } else {
-            productDAO.insert(p);
-            logAction(req, "INSERT", "Products", 0);
-        }
-        resp.sendRedirect(req.getContextPath() + "/main?action=productList");
-    }
-
-    private void handleProductDelete(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        productDAO.delete(id);
-        logAction(req, "DELETE", "Products", id);
-        resp.sendRedirect(req.getContextPath() + "/main?action=productList");
-    }
-
-    // ══════════════ WAREHOUSE ══════════════
-
-    private void showWarehouseList(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        req.setAttribute("warehouses", warehouseDAO.getAll());
-        req.getRequestDispatcher("/views/warehouse/warehouseList.jsp").forward(req, resp);
-    }
-
-    private void showWarehouseForm(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        String id = req.getParameter("id");
-        if (id != null && !id.isEmpty())
-            req.setAttribute("warehouse", warehouseDAO.getById(Integer.parseInt(id)));
-        req.getRequestDispatcher("/views/warehouse/warehouseForm.jsp").forward(req, resp);
-    }
-
-    private void handleWarehouseSave(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        Warehouse w = new Warehouse();
-        String id = req.getParameter("warehouseId");
-        w.setWarehouseName(req.getParameter("warehouseName"));
-        w.setLocation(req.getParameter("location"));
-        w.setManager(req.getParameter("manager"));
-        if (id != null && !id.isEmpty()) {
-            w.setWarehouseId(Integer.parseInt(id));
-            warehouseDAO.update(w);
-            logAction(req, "UPDATE", "Warehouses", w.getWarehouseId());
-        } else {
-            warehouseDAO.insert(w);
-            logAction(req, "INSERT", "Warehouses", 0);
-        }
-        resp.sendRedirect(req.getContextPath() + "/main?action=warehouseList");
-    }
-
-    private void handleWarehouseDelete(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        int id = Integer.parseInt(req.getParameter("id"));
-        warehouseDAO.delete(id);
-        logAction(req, "DELETE", "Warehouses", id);
-        resp.sendRedirect(req.getContextPath() + "/main?action=warehouseList");
-    }
-
-    // ── Helper ──────────────────────────────────
-    private void logAction(HttpServletRequest req, String action, String table, int id) {
-        User user = (User) req.getSession().getAttribute("loggedUser");
+    private void logAction(HttpServletRequest request, String action, String table, int id) {
+        User user = (User) request.getSession().getAttribute("loggedUser");
         if (user != null) auditDAO.log(user.getUserId(), action, table, id);
     }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException { processRequest(request, response); }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException { processRequest(request, response); }
 }
