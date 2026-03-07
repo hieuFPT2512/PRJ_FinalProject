@@ -10,6 +10,8 @@ import dao.WarehouseDAO;
 import model.InboundDocument;
 import model.OutboundDocument;
 import model.User;
+import utils.AuthUtils;
+import utils.RoleConstants;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -18,6 +20,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * Phân quyền WarehouseServlet:
+ *   Tất cả action → CHỈ ADMIN (1) và WAREHOUSE_STAFF (3)
+ *   (Kế toán, Tài xế, CSKH không có quyền vào kho)
+ */
 @WebServlet("/warehouse")
 public class WarehouseServlet extends HttpServlet {
 
@@ -34,12 +41,22 @@ public class WarehouseServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
 
+        User loginUser = AuthUtils.getLoginUser(request);
+        if (loginUser == null) { AuthUtils.redirectLogin(request, response); return; }
+
+        // Toàn bộ nghiệp vụ kho: chỉ ADMIN và WAREHOUSE_STAFF
+        if (!AuthUtils.hasRole(loginUser,
+                RoleConstants.ROLE_ADMIN,
+                RoleConstants.ROLE_WAREHOUSE_STAFF)) {
+            AuthUtils.denyAccess(request, response); return;
+        }
+
         String action = request.getParameter("action");
         if (action == null) action = "";
 
         switch (action) {
 
-            // ══════════════ OUTBOUND ══════════════
+            // ══════════════ XUẤT KHO ══════════════
             case "outboundList":
                 request.setAttribute("outbounds", outboundDAO.getAll());
                 request.getRequestDispatcher("/views/outbound/outboundList.jsp").forward(request, response);
@@ -70,7 +87,7 @@ public class WarehouseServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/main?action=outboundList");
                 break;
 
-            // ══════════════ INBOUND ══════════════
+            // ══════════════ NHẬP KHO ══════════════
             case "inboundList":
                 request.setAttribute("inbounds", inboundDAO.getAll());
                 request.getRequestDispatcher("/views/inbound/inboundList.jsp").forward(request, response);
@@ -92,7 +109,7 @@ public class WarehouseServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/main?action=inboundList");
                 break;
 
-            // ══════════════ STOCK LEDGER ══════════════
+            // ══════════════ SỔ CÁI TỒN KHO ══════════════
             case "stockLedger":
                 String warehouseId = request.getParameter("warehouseId");
                 String productId   = request.getParameter("productId");
@@ -122,13 +139,9 @@ public class WarehouseServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 }

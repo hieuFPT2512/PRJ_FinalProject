@@ -6,6 +6,9 @@ import dao.InvoiceDAO;
 import dao.ProductDAO;
 import dao.StockLedgerDAO;
 import dao.WarehouseDAO;
+import model.User;
+import utils.AuthUtils;
+import utils.RoleConstants;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -14,6 +17,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * Phân quyền SearchServlet:
+ *   searchOrders    → ADMIN, WAREHOUSE_STAFF, DRIVER, CUSTOMER_SERVICE
+ *   searchStockDocs → ADMIN, WAREHOUSE_STAFF
+ *   searchInvoices  → ADMIN, ACCOUNTANT
+ */
 @WebServlet("/search")
 public class SearchServlet extends HttpServlet {
 
@@ -29,12 +38,23 @@ public class SearchServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
 
+        User loginUser = AuthUtils.getLoginUser(request);
+        if (loginUser == null) { AuthUtils.redirectLogin(request, response); return; }
+
         String action = request.getParameter("action");
         if (action == null) action = "";
 
         switch (action) {
 
+            // Tìm kiếm đơn hàng: mọi role trừ Kế toán
             case "searchOrders":
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF,
+                        RoleConstants.ROLE_DRIVER,
+                        RoleConstants.ROLE_CUSTOMER_SERVICE)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
                 String fromDate1    = request.getParameter("fromDate");
                 String toDate1      = request.getParameter("toDate");
                 String status1      = request.getParameter("status");
@@ -51,7 +71,13 @@ public class SearchServlet extends HttpServlet {
                 request.getRequestDispatcher("/views/search/searchOrders.jsp").forward(request, response);
                 break;
 
+            // Tìm kiếm chứng từ kho: chỉ ADMIN và Thủ kho
             case "searchStockDocs":
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_WAREHOUSE_STAFF)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
                 String warehouseId2 = request.getParameter("warehouseId");
                 String productId2   = request.getParameter("productId");
                 String refType2     = request.getParameter("refType");
@@ -66,7 +92,13 @@ public class SearchServlet extends HttpServlet {
                 request.getRequestDispatcher("/views/search/searchStockDocs.jsp").forward(request, response);
                 break;
 
+            // Tìm kiếm hóa đơn: chỉ ADMIN và Kế toán
             case "searchInvoices":
+                if (!AuthUtils.hasRole(loginUser,
+                        RoleConstants.ROLE_ADMIN,
+                        RoleConstants.ROLE_ACCOUNTANT)) {
+                    AuthUtils.denyAccess(request, response); return;
+                }
                 String fromDate3 = request.getParameter("fromDate");
                 String toDate3   = request.getParameter("toDate");
                 String status3   = request.getParameter("status");
@@ -88,13 +120,9 @@ public class SearchServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 }

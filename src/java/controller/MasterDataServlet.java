@@ -8,6 +8,8 @@ import model.Customer;
 import model.Product;
 import model.User;
 import model.Warehouse;
+import utils.AuthUtils;
+import utils.RoleConstants;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -17,6 +19,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 
+/**
+ * Phân quyền MasterDataServlet:
+ *   *List / *Form (xem)  → ADMIN, WAREHOUSE_STAFF, CUSTOMER_SERVICE
+ *   *Save / *Delete      → ADMIN, WAREHOUSE_STAFF
+ */
 @WebServlet("/masterdata")
 public class MasterDataServlet extends HttpServlet {
 
@@ -25,10 +32,30 @@ public class MasterDataServlet extends HttpServlet {
     private final WarehouseDAO warehouseDAO = new WarehouseDAO();
     private final AuditLogDAO  auditDAO     = new AuditLogDAO();
 
+    // Role được phép XEM danh mục
+    private static final int[] CAN_VIEW   = {
+        RoleConstants.ROLE_ADMIN,
+        RoleConstants.ROLE_WAREHOUSE_STAFF,
+        RoleConstants.ROLE_CUSTOMER_SERVICE
+    };
+    // Role được phép SỬA / XÓA danh mục
+    private static final int[] CAN_EDIT   = {
+        RoleConstants.ROLE_ADMIN,
+        RoleConstants.ROLE_WAREHOUSE_STAFF
+    };
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
+
+        User loginUser = AuthUtils.getLoginUser(request);
+        if (loginUser == null) { AuthUtils.redirectLogin(request, response); return; }
+
+        // Tất cả action đều cần ít nhất quyền XEM
+        if (!AuthUtils.hasRole(loginUser, CAN_VIEW)) {
+            AuthUtils.denyAccess(request, response); return;
+        }
 
         String action = request.getParameter("action");
         if (action == null) action = "";
@@ -48,10 +75,12 @@ public class MasterDataServlet extends HttpServlet {
                 String custId = request.getParameter("id");
                 if (custId != null && !custId.isEmpty())
                     request.setAttribute("customer", customerDAO.getById(Integer.parseInt(custId)));
+                request.setAttribute("canEdit", AuthUtils.hasRole(loginUser, CAN_EDIT));
                 request.getRequestDispatcher("/views/customer/customerForm.jsp").forward(request, response);
                 break;
 
             case "customerSave":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
                 Customer c = new Customer();
                 String cId = request.getParameter("customerId");
                 c.setCustomerName(request.getParameter("customerName"));
@@ -70,6 +99,7 @@ public class MasterDataServlet extends HttpServlet {
                 break;
 
             case "customerDelete":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
                 int cDelId = Integer.parseInt(request.getParameter("id"));
                 customerDAO.delete(cDelId);
                 logAction(request, "DELETE", "Customers", cDelId);
@@ -86,10 +116,12 @@ public class MasterDataServlet extends HttpServlet {
                 String prodId = request.getParameter("id");
                 if (prodId != null && !prodId.isEmpty())
                     request.setAttribute("product", productDAO.getById(Integer.parseInt(prodId)));
+                request.setAttribute("canEdit", AuthUtils.hasRole(loginUser, CAN_EDIT));
                 request.getRequestDispatcher("/views/product/productForm.jsp").forward(request, response);
                 break;
 
             case "productSave":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
                 Product p = new Product();
                 String pId = request.getParameter("productId");
                 p.setSku(request.getParameter("sku"));
@@ -109,6 +141,7 @@ public class MasterDataServlet extends HttpServlet {
                 break;
 
             case "productDelete":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
                 int pDelId = Integer.parseInt(request.getParameter("id"));
                 productDAO.delete(pDelId);
                 logAction(request, "DELETE", "Products", pDelId);
@@ -125,10 +158,12 @@ public class MasterDataServlet extends HttpServlet {
                 String whId = request.getParameter("id");
                 if (whId != null && !whId.isEmpty())
                     request.setAttribute("warehouse", warehouseDAO.getById(Integer.parseInt(whId)));
+                request.setAttribute("canEdit", AuthUtils.hasRole(loginUser, CAN_EDIT));
                 request.getRequestDispatcher("/views/warehouse/warehouseForm.jsp").forward(request, response);
                 break;
 
             case "warehouseSave":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
                 Warehouse w = new Warehouse();
                 String wId = request.getParameter("warehouseId");
                 w.setWarehouseName(request.getParameter("warehouseName"));
@@ -146,6 +181,7 @@ public class MasterDataServlet extends HttpServlet {
                 break;
 
             case "warehouseDelete":
+                if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
                 int wDelId = Integer.parseInt(request.getParameter("id"));
                 warehouseDAO.delete(wDelId);
                 logAction(request, "DELETE", "Warehouses", wDelId);
@@ -164,13 +200,9 @@ public class MasterDataServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 }
