@@ -8,6 +8,8 @@ import model.CodReconciliation;
 import model.Invoice;
 import model.Payment;
 import model.User;
+import utils.AuthUtils;
+import utils.RoleConstants;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -17,6 +19,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 
+/**
+ * Phân quyền AccountingServlet:
+ *   invoiceList / invoiceDetail / paymentList / codList (xem) → ADMIN, ACCOUNTANT
+ *   invoiceUpdate / paymentSave / codUpdate (thao tác)        → ADMIN, ACCOUNTANT
+ *   (Thủ kho, Tài xế, CSKH không được vào kế toán)
+ */
 @WebServlet("/accounting")
 public class AccountingServlet extends HttpServlet {
 
@@ -30,12 +38,22 @@ public class AccountingServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
 
+        User loginUser = AuthUtils.getLoginUser(request);
+        if (loginUser == null) { AuthUtils.redirectLogin(request, response); return; }
+
+        // Toàn bộ kế toán: chỉ ADMIN và ACCOUNTANT
+        if (!AuthUtils.hasRole(loginUser,
+                RoleConstants.ROLE_ADMIN,
+                RoleConstants.ROLE_ACCOUNTANT)) {
+            AuthUtils.denyAccess(request, response); return;
+        }
+
         String action = request.getParameter("action");
         if (action == null) action = "";
 
         switch (action) {
 
-            // ══════════════ INVOICE ══════════════
+            // ══════════════ HÓA ĐƠN ══════════════
             case "invoiceList":
                 request.setAttribute("invoices", invoiceDAO.getAll());
                 request.getRequestDispatcher("/views/invoice/invoiceList.jsp").forward(request, response);
@@ -55,7 +73,7 @@ public class AccountingServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/main?action=invoiceList");
                 break;
 
-            // ══════════════ PAYMENT ══════════════
+            // ══════════════ THANH TOÁN ══════════════
             case "paymentList":
                 request.setAttribute("payments", paymentDAO.getAll());
                 request.setAttribute("invoices", invoiceDAO.getAll());
@@ -75,7 +93,7 @@ public class AccountingServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/main?action=paymentList");
                 break;
 
-            // ══════════════ COD ══════════════
+            // ══════════════ ĐỐI SOÁT COD ══════════════
             case "codList":
                 request.setAttribute("cods", codDAO.getAll());
                 request.getRequestDispatcher("/views/cod/codList.jsp").forward(request, response);
@@ -103,13 +121,9 @@ public class AccountingServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 }

@@ -33,7 +33,9 @@ body {
 
 .sidebar {
     width: 220px;
-    min-height: calc(100vh - 55px);
+    /*min-height: calc(100vh - 55px);*/
+    height: calc(100vh - 55px);
+    overflow-x: hidden;
     background: #1e3a5f;
     padding: 15px 0;
     position: fixed;

@@ -4,6 +4,8 @@ import dao.AuditLogDAO;
 import dao.RoleDAO;
 import dao.UserDAO;
 import model.User;
+import utils.AuthUtils;
+import utils.RoleConstants;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -12,6 +14,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * Phân quyền:
+ *   login / logout     → tất cả (public)
+ *   userList / userForm / userSave / userDelete / auditLog → CHỈ ADMIN (1)
+ */
 @WebServlet("/auth")
 public class AuthServlet extends HttpServlet {
 
@@ -27,32 +34,41 @@ public class AuthServlet extends HttpServlet {
         String action = request.getParameter("action");
         if (action == null) action = "login";
 
-        switch (action) {
-
-            case "login":
-                if ("POST".equalsIgnoreCase(request.getMethod())) {
-                    // Xử lý submit form đăng nhập
-                    String username = request.getParameter("username");
-                    String password = request.getParameter("password");
-                    User user = userDAO.checkLogin(username, password);
-                    if (user != null) {
-                        request.getSession().setAttribute("loggedUser", user);
-                        response.sendRedirect(request.getContextPath() + "/main?action=dashboard");
-                    } else {
-                        request.setAttribute("error", "Sai tên đăng nhập hoặc mật khẩu!");
-                        request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
-                    }
+        // ── Public: không cần đăng nhập ──────────────────────────────────
+        if ("login".equals(action)) {
+            if ("POST".equalsIgnoreCase(request.getMethod())) {
+                String username = request.getParameter("username");
+                String password = request.getParameter("password");
+                User user = userDAO.checkLogin(username, password);
+                if (user != null) {
+                    request.getSession().setAttribute("loggedUser", user);
+                    response.sendRedirect(request.getContextPath() + "/main?action=dashboard");
                 } else {
-                    // Hiển thị form đăng nhập
+                    request.setAttribute("error", "Sai tên đăng nhập hoặc mật khẩu!");
                     request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
                 }
-                break;
+            } else {
+                request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+            }
+            return;
+        }
 
-            case "logout":
-                request.getSession().invalidate();
-                response.sendRedirect(request.getContextPath() + "/main?action=login");
-                break;
+        if ("logout".equals(action)) {
+            request.getSession().invalidate();
+            response.sendRedirect(request.getContextPath() + "/main?action=login");
+            return;
+        }
 
+        // ── Phải đăng nhập ───────────────────────────────────────────────
+        User loginUser = AuthUtils.getLoginUser(request);
+        if (loginUser == null) { AuthUtils.redirectLogin(request, response); return; }
+
+        // ── Chỉ ADMIN ────────────────────────────────────────────────────
+        if (!AuthUtils.hasRole(loginUser, RoleConstants.ROLE_ADMIN)) {
+            AuthUtils.denyAccess(request, response); return;
+        }
+
+        switch (action) {
             case "userList":
                 request.setAttribute("users", userDAO.getAll());
                 request.getRequestDispatcher("/views/auth/userList.jsp").forward(request, response);
@@ -109,13 +125,9 @@ public class AuthServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
+            throws ServletException, IOException { processRequest(request, response); }
 }
