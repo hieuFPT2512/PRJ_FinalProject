@@ -20,9 +20,10 @@
                     <td>${p.imageUrl}</td>
                     <td>
                         <c:choose>
-                            <c:when test="${p.status == 'Completed'}"><span class="badge badge-success">${p.status}</span></c:when>
-                            <c:when test="${p.status == 'Pending'}"><span class="badge badge-warning">${p.status}</span></c:when>
-                            <c:otherwise><span class="badge badge-danger">${p.status}</span></c:otherwise>
+                            <c:when test="${p.status == 'Valid'}"><span class="badge badge-success">${p.status}</span></c:when>
+                            <c:when test="${p.status == 'Pending'}"><span class="badge badge-secondary">${p.status}</span></c:when>
+                            <c:when test="${p.status == 'Illegible'}"><span class="badge badge-danger">${p.status}</span></c:when>
+                            <c:otherwise><span class="badge badge-warning">${p.status}</span></c:otherwise>
                         </c:choose>
                     </td>
                     <td>

@@ -24,7 +24,7 @@ public class AuditLogDAO {
     public List<AuditLog> getAll() {
         List<AuditLog> list = new ArrayList<>();
         String sql = "SELECT al.*, u.username FROM AuditLogs al " +
-                     "JOIN Users u ON al.user_id=u.user_id ORDER BY al.action_time DESC";
+                     "JOIN Users u ON al.user_id=u.user_id ORDER BY al.action_time ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

@@ -13,7 +13,7 @@ public class CodReconciliationDAO {
         List<CodReconciliation> list = new ArrayList<>();
         String sql = "SELECT cr.*, c.customer_name FROM CodReconciliations cr " +
                      "JOIN DeliveryOrders o ON cr.order_id=o.order_id " +
-                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY cr.cod_id DESC";
+                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY cr.cod_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -26,7 +26,7 @@ public class CodReconciliationDAO {
         List<CodReconciliation> list = new ArrayList<>();
         String sql = "SELECT cr.*, c.customer_name FROM CodReconciliations cr " +
                      "JOIN DeliveryOrders o ON cr.order_id=o.order_id " +
-                     "JOIN Customers c ON o.customer_id=c.customer_id WHERE cr.status='Mismatch' ORDER BY cr.mismatch_amount DESC";
+                     "JOIN Customers c ON o.customer_id=c.customer_id WHERE cr.status='Mismatch' ORDER BY cr.mismatch_amount ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

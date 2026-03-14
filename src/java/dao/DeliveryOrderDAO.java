@@ -14,7 +14,7 @@ public class DeliveryOrderDAO {
         List<DeliveryOrder> list = new ArrayList<>();
         String sql = "SELECT o.*, c.customer_name, w.warehouse_name FROM DeliveryOrders o " +
                      "JOIN Customers c ON o.customer_id=c.customer_id " +
-                     "JOIN Warehouses w ON o.warehouse_id=w.warehouse_id ORDER BY o.order_id DESC";
+                     "JOIN Warehouses w ON o.warehouse_id=w.warehouse_id ORDER BY o.order_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -55,7 +55,7 @@ public class DeliveryOrderDAO {
         if (customerId != null && !customerId.isEmpty())   { sql.append(" AND o.customer_id = ?");  params.add(Integer.parseInt(customerId)); }
         if (route != null && !route.isEmpty())     { sql.append(" AND o.route LIKE ?"); params.add("%" + route + "%"); }
         if (hasCod != null && !hasCod.isEmpty())   { sql.append(" AND o.has_cod = ?"); params.add(hasCod); }
-        sql.append(" ORDER BY o.order_date DESC");
+        sql.append(" ORDER BY o.order_date ASC");
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {

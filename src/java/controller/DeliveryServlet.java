@@ -249,7 +249,7 @@ public class DeliveryServlet extends HttpServlet {
                 ProofOfDelivery pc = new ProofOfDelivery();
                 pc.setPodId(Integer.parseInt(request.getParameter("podId")));
                 pc.setSignedBy(request.getParameter("signedBy"));
-                pc.setStatus("Completed");
+                pc.setStatus("Valid");
                 podDAO.update(pc);
                 logAction(request, "UPDATE", "ProofOfDeliveries", pc.getPodId());
                 response.sendRedirect(request.getContextPath() + "/main?action=podList");
