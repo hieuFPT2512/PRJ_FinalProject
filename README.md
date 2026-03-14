@@ -39,13 +39,13 @@ The system implements **strict role-based access control**, providing **separate
 
 # 🛠️ Technology Stack
 
-- **Programming Language:** Java (JDK 8/11+)
+- **Programming Language:** Java (JDK 8 update 172)
 - **Web Technologies:** Java Servlets, JSP (JavaServer Pages), JSTL
 - **Architecture:** MVC (Model – View – Controller), Front Controller Pattern (`MainController`)
 - **Database:** SQL Server / MySQL (connected via JDBC)
 - **Frontend:** Pure HTML (optimized for performance and focused on business logic workflows)
 - **IDE:** Apache NetBeans / Eclipse
-- **Web Server:** Apache Tomcat 8.5 / 9.0+
+- **Web Server:** Apache Tomcat 9.0.113.
 
 ---
 
