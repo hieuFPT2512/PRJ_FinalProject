@@ -13,7 +13,7 @@ public class ShipmentDAO {
         List<Shipment> list = new ArrayList<>();
         String sql = "SELECT s.*, c.customer_name, o.route FROM Shipments s " +
                      "JOIN DeliveryOrders o ON s.order_id=o.order_id " +
-                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY s.shipment_id DESC";
+                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY s.shipment_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

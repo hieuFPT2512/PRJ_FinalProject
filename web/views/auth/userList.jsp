@@ -3,12 +3,12 @@
 <%@ include file="/views/header.jsp" %>
 <div class="card">
     <div class="card-header">
-        <h2>👤 Quản lý Người dùng</h2>
-        <a href="<%= request.getContextPath() %>/main?action=userForm" class="btn btn-primary btn-sm">+ Thêm người dùng</a>
+        <h2>👤 User Management</h2>
+        <a href="<%= request.getContextPath() %>/main?action=userForm" class="btn btn-primary btn-sm">+ Add User</a>
     </div>
     <div class="card-body">
         <table>
-            <thead><tr><th>#</th><th>Username</th><th>Họ tên</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>#</th><th>Username</th><th>Full Name</th><th>Role</th><th>Status</th><th>Created At</th><th>Action</th></tr></thead>
             <tbody>
                 <c:forEach var="u" items="${users}">
                 <tr>
@@ -24,9 +24,9 @@
                     </td>
                     <td>${u.createdAt}</td>
                     <td>
-                        <a href="<%= request.getContextPath() %>/main?action=userForm&id=${u.userId}" class="btn btn-warning btn-sm">Sửa</a>
+                        <a href="<%= request.getContextPath() %>/main?action=userForm&id=${u.userId}" class="btn btn-warning btn-sm">Edit</a>
                         <a href="<%= request.getContextPath() %>/main?action=userDelete&id=${u.userId}" class="btn btn-danger btn-sm"
-                           onclick="return confirm('Vô hiệu hóa người dùng này?')">Khóa</a>
+                           onclick="return confirm('Disable this user?')">Disable</a>
                     </td>
                 </tr>
                 </c:forEach>

@@ -13,7 +13,8 @@ public class StockLedgerDAO {
         List<StockLedger> list = new ArrayList<>();
         String sql = "SELECT sl.*, w.warehouse_name, p.product_name, p.sku FROM StockLedgers sl " +
                      "JOIN Warehouses w ON sl.warehouse_id=w.warehouse_id " +
-                     "JOIN Products p ON sl.product_id=p.product_id ORDER BY sl.created_at DESC";
+                     "JOIN Products p ON sl.product_id=p.product_id " +
+                     "ORDER BY sl.ledger_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -34,7 +35,7 @@ public class StockLedgerDAO {
         if (refType != null && !refType.isEmpty())         { sql.append(" AND sl.ref_type=?");      params.add(refType); }
         if (fromDate != null && !fromDate.isEmpty())       { sql.append(" AND sl.created_at>=?");   params.add(fromDate + " 00:00:00"); }
         if (toDate != null && !toDate.isEmpty())           { sql.append(" AND sl.created_at<=?");   params.add(toDate + " 23:59:59"); }
-        sql.append(" ORDER BY sl.created_at DESC");
+        sql.append(" ORDER BY sl.ledger_id ASC");
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {

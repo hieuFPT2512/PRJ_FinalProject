@@ -14,7 +14,7 @@ public class OutboundDocumentDAO {
         String sql = "SELECT od.*, w.warehouse_name, c.customer_name FROM OutboundDocuments od " +
                      "JOIN Warehouses w ON od.warehouse_id=w.warehouse_id " +
                      "JOIN DeliveryOrders o ON od.order_id=o.order_id " +
-                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY od.outbound_id DESC";
+                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY od.outbound_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -49,7 +49,7 @@ public class OutboundDocumentDAO {
         if (toDate != null && !toDate.isEmpty())     { sql.append(" AND od.doc_date <= ?"); params.add(toDate + " 23:59:59"); }
         if (warehouseId != null && !warehouseId.isEmpty()) { sql.append(" AND od.warehouse_id=?"); params.add(Integer.parseInt(warehouseId)); }
         if (status != null && !status.isEmpty())     { sql.append(" AND od.status=?"); params.add(status); }
-        sql.append(" ORDER BY od.doc_date DESC");
+        sql.append(" ORDER BY od.doc_date ASC");
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {

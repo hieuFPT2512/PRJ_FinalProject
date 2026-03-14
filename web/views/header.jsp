@@ -3,17 +3,17 @@
 <%
     model.User loggedUser = (model.User) session.getAttribute("loggedUser");
     String roleName = (loggedUser != null) ? loggedUser.getRoleName() : "";
-    String role     = roleName; // alias để tương thích với các JSP cũ dùng biến "role"
+    String role     = roleName; // alias to maintain compatibility with older JSPs using variable "role"
     int roleId      = (loggedUser != null) ? loggedUser.getRoleId()   : 0;
 
-    // Hằng số role — khớp với utils.RoleConstants
+    // Role constants — match utils.RoleConstants
     final int ADMIN            = 1;
     final int ACCOUNTANT       = 2;
     final int WAREHOUSE_STAFF  = 3;
     final int DRIVER           = 4;
     final int CUSTOMER_SERVICE = 5;
 
-    // Nhóm quyền dùng để ẩn/hiện menu
+    // Permission groups used to show/hide menu
     boolean canViewMasterData  = (roleId == ADMIN || roleId == WAREHOUSE_STAFF || roleId == CUSTOMER_SERVICE);
     boolean canViewDelivery    = (roleId == ADMIN || roleId == WAREHOUSE_STAFF || roleId == DRIVER || roleId == CUSTOMER_SERVICE);
     boolean canViewShipmentPod = (roleId == ADMIN || roleId == WAREHOUSE_STAFF || roleId == DRIVER);
@@ -25,7 +25,7 @@
     boolean isAdmin            = (roleId == ADMIN);
 %>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,77 +36,77 @@
 <nav class="navbar">
     <a class="brand" href="<%= request.getContextPath() %>/main?action=dashboard">🚚 DeliverAcct</a>
     <span class="user-info">
-        Xin chào, <strong><%= loggedUser != null ? loggedUser.getFullName() : "" %></strong>
+        Hello, <strong><%= loggedUser != null ? loggedUser.getFullName() : "" %></strong>
         (<%= roleName %>) &nbsp;|&nbsp;
-        <a href="<%= request.getContextPath() %>/main?action=logout">Đăng xuất</a>
+        <a href="<%= request.getContextPath() %>/main?action=logout">Logout</a>
     </span>
 </nav>
 
 <div class="wrapper">
 <aside class="sidebar">
 
-    <%-- ── TỔNG QUAN: tất cả role ── --%>
-    <div class="menu-title">Tổng quan</div>
+    <%-- ── OVERVIEW: all roles ── --%>
+    <div class="menu-title">Overview</div>
     <a href="<%= request.getContextPath() %>/main?action=dashboard">🏠 Dashboard</a>
 
-    <%-- ── DANH MỤC: ADMIN, Thủ kho, CSKH ── --%>
+    <%-- ── MASTER DATA: ADMIN, Warehouse staff, Customer service ── --%>
     <% if (canViewMasterData) { %>
-    <div class="menu-title">Danh mục</div>
-    <a href="<%= request.getContextPath() %>/main?action=customerList">👥 Khách hàng</a>
-    <a href="<%= request.getContextPath() %>/main?action=productList">📦 Sản phẩm</a>
-    <a href="<%= request.getContextPath() %>/main?action=warehouseList">🏭 Kho hàng</a>
+    <div class="menu-title">Master Data</div>
+    <a href="<%= request.getContextPath() %>/main?action=customerList">👥 Customers</a>
+    <a href="<%= request.getContextPath() %>/main?action=productList">📦 Products</a>
+    <a href="<%= request.getContextPath() %>/main?action=warehouseList">🏭 Warehouses</a>
     <% } %>
 
-    <%-- ── GIAO HÀNG ── --%>
+    <%-- ── DELIVERY ── --%>
     <% if (canViewDelivery) { %>
-    <div class="menu-title">Giao hàng</div>
-    <a href="<%= request.getContextPath() %>/main?action=orderList">📋 Đơn giao hàng</a>
+    <div class="menu-title">Delivery</div>
+    <a href="<%= request.getContextPath() %>/main?action=orderList">📋 Delivery Orders</a>
     <% } %>
-    <%-- Lô hàng và POD: ADMIN, Thủ kho, Tài xế --%>
+    <%-- Shipments and POD: ADMIN, Warehouse staff, Driver --%>
     <% if (canViewShipmentPod) { %>
-    <a href="<%= request.getContextPath() %>/main?action=shipmentList">🚛 Lô hàng</a>
-    <a href="<%= request.getContextPath() %>/main?action=podList">📸 Bằng chứng giao</a>
+    <a href="<%= request.getContextPath() %>/main?action=shipmentList">🚛 Shipments</a>
+    <a href="<%= request.getContextPath() %>/main?action=podList">📸 Proof of Delivery</a>
     <% } %>
 
-    <%-- ── KHO: ADMIN, Thủ kho ── --%>
+    <%-- ── WAREHOUSE: ADMIN, Warehouse staff ── --%>
     <% if (canViewWarehouse) { %>
-    <div class="menu-title">Kho hàng</div>
-    <a href="<%= request.getContextPath() %>/main?action=outboundList">⬆️ Xuất kho</a>
-    <a href="<%= request.getContextPath() %>/main?action=inboundList">⬇️ Nhập kho</a>
-    <a href="<%= request.getContextPath() %>/main?action=stockLedger">📊 Sổ cái tồn kho</a>
+    <div class="menu-title">Warehouse</div>
+    <a href="<%= request.getContextPath() %>/main?action=outboundList">⬆️ Outbound</a>
+    <a href="<%= request.getContextPath() %>/main?action=inboundList">⬇️ Inbound</a>
+    <a href="<%= request.getContextPath() %>/main?action=stockLedger">📊 Stock Ledger</a>
     <% } %>
 
-    <%-- ── KẾ TOÁN: ADMIN, Kế toán ── --%>
+    <%-- ── ACCOUNTING: ADMIN, Accountant ── --%>
     <% if (canViewAccounting) { %>
-    <div class="menu-title">Kế toán</div>
-    <a href="<%= request.getContextPath() %>/main?action=invoiceList">🧾 Hóa đơn</a>
-    <a href="<%= request.getContextPath() %>/main?action=paymentList">💳 Thanh toán</a>
-    <a href="<%= request.getContextPath() %>/main?action=codList">💵 Đối soát COD</a>
+    <div class="menu-title">Accounting</div>
+    <a href="<%= request.getContextPath() %>/main?action=invoiceList">🧾 Invoices</a>
+    <a href="<%= request.getContextPath() %>/main?action=paymentList">💳 Payments</a>
+    <a href="<%= request.getContextPath() %>/main?action=codList">💵 COD Reconciliation</a>
     <% } %>
 
-    <%-- ── TÌM KIẾM: hiện từng mục theo quyền ── --%>
+    <%-- ── SEARCH: show each item based on permission ── --%>
     <% if (canSearchOrders || canSearchStock || canSearchInvoices) { %>
-    <div class="menu-title">Tìm kiếm</div>
+    <div class="menu-title">Search</div>
     <% if (canSearchOrders) { %>
-    <a href="<%= request.getContextPath() %>/main?action=searchOrders">🔍 Tìm đơn giao</a>
+    <a href="<%= request.getContextPath() %>/main?action=searchOrders">🔍 Search Orders</a>
     <% } %>
     <% if (canSearchStock) { %>
-    <a href="<%= request.getContextPath() %>/main?action=searchStockDocs">🔍 Tìm chứng từ kho</a>
+    <a href="<%= request.getContextPath() %>/main?action=searchStockDocs">🔍 Search Warehouse Documents</a>
     <% } %>
     <% if (canSearchInvoices) { %>
-    <a href="<%= request.getContextPath() %>/main?action=searchInvoices">🔍 Tìm hóa đơn</a>
+    <a href="<%= request.getContextPath() %>/main?action=searchInvoices">🔍 Search Invoices</a>
     <% } %>
     <% } %>
 
-    <%-- ── CẢNH BÁO & CASE: tất cả role ── --%>
-    <div class="menu-title">Cảnh báo</div>
-    <a href="<%= request.getContextPath() %>/main?action=alertList">🔔 Danh sách cảnh báo</a>
-    <a href="<%= request.getContextPath() %>/main?action=caseList">📁 Case xử lý</a>
+    <%-- ── ALERTS & CASES: all roles ── --%>
+    <div class="menu-title">Alerts</div>
+    <a href="<%= request.getContextPath() %>/main?action=alertList">🔔 Alert List</a>
+    <a href="<%= request.getContextPath() %>/main?action=caseList">📁 Case Management</a>
 
-    <%-- ── QUẢN TRỊ: chỉ ADMIN ── --%>
+    <%-- ── ADMINISTRATION: ADMIN only ── --%>
     <% if (isAdmin) { %>
-    <div class="menu-title">Quản trị</div>
-    <a href="<%= request.getContextPath() %>/main?action=userList">👤 Người dùng</a>
+    <div class="menu-title">Administration</div>
+    <a href="<%= request.getContextPath() %>/main?action=userList">👤 Users</a>
     <a href="<%= request.getContextPath() %>/main?action=auditLog">📝 Audit Log</a>
     <% } %>
 

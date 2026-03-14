@@ -3,26 +3,26 @@
 <%@ include file="/views/header.jsp" %>
 <div class="card">
     <div class="card-header">
-        <h2>${empty warehouse ? '➕ Thêm Kho' : '✏️ Sửa Kho'}</h2>
-        <a href="<%= request.getContextPath() %>/main?action=warehouseList" class="btn btn-secondary btn-sm">← Quay lại</a>
+        <h2>${empty warehouse ? '➕ Add Warehouse' : '✏️ Edit Warehouse'}</h2>
+        <a href="<%= request.getContextPath() %>/main?action=warehouseList" class="btn btn-secondary btn-sm">← Back</a>
     </div>
     <div class="card-body" style="max-width:500px;">
         <form method="post" action="<%= request.getContextPath() %>/main?action=warehouseSave">
             <input type="hidden" name="warehouseId" value="${warehouse.warehouseId}">
             <div class="form-group">
-                <label>Tên kho *</label>
+                <label>Warehouse Name *</label>
                 <input type="text" name="warehouseName" class="form-control" value="${warehouse.warehouseName}" required>
             </div>
             <div class="form-group">
-                <label>Địa chỉ</label>
+                <label>Location</label>
                 <input type="text" name="location" class="form-control" value="${warehouse.location}">
             </div>
             <div class="form-group">
-                <label>Quản lý kho</label>
+                <label>Warehouse Manager</label>
                 <input type="text" name="manager" class="form-control" value="${warehouse.manager}">
             </div>
-            <button type="submit" class="btn btn-primary">💾 Lưu</button>
-            <a href="<%= request.getContextPath() %>/main?action=warehouseList" class="btn btn-secondary">Hủy</a>
+            <button type="submit" class="btn btn-primary">💾 Save</button>
+            <a href="<%= request.getContextPath() %>/main?action=warehouseList" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
 </div>

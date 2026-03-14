@@ -3,26 +3,26 @@
 <%@ include file="/views/header.jsp" %>
 <div class="card">
     <div class="card-header">
-        <h2>${empty order ? '➕ Tạo Đơn giao' : '✏️ Sửa Đơn giao'}</h2>
-        <a href="<%= request.getContextPath() %>/main?action=orderList" class="btn btn-secondary btn-sm">← Quay lại</a>
+        <h2>${empty order ? '➕ Create Delivery Order' : '✏️ Edit Delivery Order'}</h2>
+        <a href="<%= request.getContextPath() %>/main?action=orderList" class="btn btn-secondary btn-sm">← Back</a>
     </div>
     <div class="card-body" style="max-width:700px;">
         <form method="post" action="<%= request.getContextPath() %>/main?action=orderSave">
             <input type="hidden" name="orderId" value="${order.orderId}">
             <div class="form-row">
                 <div class="form-group">
-                    <label>Khách hàng *</label>
+                    <label>Customer *</label>
                     <select name="customerId" class="form-control" required>
-                        <option value="">-- Chọn khách hàng --</option>
+                        <option value="">-- Select customer --</option>
                         <c:forEach var="c" items="${customers}">
                             <option value="${c.customerId}" ${order.customerId == c.customerId ? 'selected' : ''}>${c.customerName}</option>
                         </c:forEach>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Kho xuất *</label>
+                    <label>Warehouse *</label>
                     <select name="warehouseId" class="form-control" required>
-                        <option value="">-- Chọn kho --</option>
+                        <option value="">-- Select warehouse --</option>
                         <c:forEach var="w" items="${warehouses}">
                             <option value="${w.warehouseId}" ${order.warehouseId == w.warehouseId ? 'selected' : ''}>${w.warehouseName}</option>
                         </c:forEach>
@@ -31,24 +31,24 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Tuyến giao</label>
-                    <input type="text" name="route" class="form-control" value="${order.route}" placeholder="VD: HN-1">
+                    <label>Delivery Route</label>
+                    <input type="text" name="route" class="form-control" value="${order.route}" placeholder="Example: HN-1">
                 </div>
                 <div class="form-group">
-                    <label>Thu hộ COD</label>
+                    <label>COD Collection</label>
                     <select name="hasCod" class="form-control">
-                        <option value="N" ${order.hasCod == 'N' ? 'selected' : ''}>Không</option>
-                        <option value="Y" ${order.hasCod == 'Y' ? 'selected' : ''}>Có COD</option>
+                        <option value="N" ${order.hasCod == 'N' ? 'selected' : ''}>No</option>
+                        <option value="Y" ${order.hasCod == 'Y' ? 'selected' : ''}>Yes COD</option>
                     </select>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Tổng tiền</label>
+                    <label>Total Amount</label>
                     <input type="number" step="0.01" name="totalAmount" class="form-control" value="${order.totalAmount}">
                 </div>
                 <div class="form-group">
-                    <label>Trạng thái</label>
+                    <label>Status</label>
                     <select name="status" class="form-control">
                         <option value="Pending"   ${order.status == 'Pending'   ? 'selected' : ''}>Pending</option>
                         <option value="Shipping"  ${order.status == 'Shipping'  ? 'selected' : ''}>Shipping</option>
@@ -57,8 +57,8 @@
                     </select>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">💾 Lưu đơn</button>
-            <a href="<%= request.getContextPath() %>/main?action=orderList" class="btn btn-secondary">Hủy</a>
+            <button type="submit" class="btn btn-primary">💾 Save Order</button>
+            <a href="<%= request.getContextPath() %>/main?action=orderList" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
 </div>

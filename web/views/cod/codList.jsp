@@ -2,11 +2,11 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/views/header.jsp" %>
 <div class="card">
-    <div class="card-header"><h2>💵 Đối soát COD</h2></div>
+    <div class="card-header"><h2>💵 COD Reconciliation</h2></div>
     <div class="card-body">
         <table>
             <thead>
-                <tr><th>#</th><th>Đơn #</th><th>Khách hàng</th><th>COD kỳ vọng</th><th>COD thực thu</th><th>Chênh lệch</th><th>Trạng thái</th><th>Cập nhật</th></tr>
+                <tr><th>#</th><th>Order #</th><th>Customer</th><th>Expected COD</th><th>Received COD</th><th>Difference</th><th>Status</th><th>Update</th></tr>
             </thead>
             <tbody>
                 <c:forEach var="c" items="${cods}">
@@ -35,7 +35,7 @@
                                 <option value="Mismatch" ${c.status=='Mismatch'?'selected':''}>Mismatch</option>
                                 <option value="No COD"   ${c.status=='No COD'  ?'selected':''}>No COD</option>
                             </select>
-                            <button type="submit" class="btn btn-warning btn-sm">Cập nhật</button>
+                            <button type="submit" class="btn btn-warning btn-sm">Update</button>
                         </form>
                     </td>
                 </tr>

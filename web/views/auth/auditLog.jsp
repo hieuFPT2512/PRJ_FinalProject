@@ -5,7 +5,7 @@
     <div class="card-header"><h2>📝 Audit Log</h2></div>
     <div class="card-body">
         <table>
-            <thead><tr><th>#</th><th>Người dùng</th><th>Hành động</th><th>Bảng</th><th>Record ID</th><th>Thời điểm</th></tr></thead>
+            <thead><tr><th>#</th><th>User</th><th>Action</th><th>Table</th><th>Record ID</th><th>Time</th></tr></thead>
             <tbody>
                 <c:forEach var="l" items="${logs}">
                 <tr>
@@ -25,7 +25,7 @@
                 </tr>
                 </c:forEach>
                 <c:if test="${empty logs}">
-                    <tr><td colspan="6" style="text-align:center;color:#aaa;">Chưa có log nào</td></tr>
+                    <tr><td colspan="6" style="text-align:center;color:#aaa;">No logs yet</td></tr>
                 </c:if>
             </tbody>
         </table>

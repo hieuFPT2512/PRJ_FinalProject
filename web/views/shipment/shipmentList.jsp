@@ -3,12 +3,12 @@
 <%@ include file="/views/header.jsp" %>
 <div class="card">
     <div class="card-header">
-        <h2>🚛 Lô hàng (Shipments)</h2>
-        <a href="<%= request.getContextPath() %>/main?action=shipmentForm" class="btn btn-primary btn-sm">+ Tạo lô mới</a>
+        <h2>🚛 Shipments</h2>
+        <a href="<%= request.getContextPath() %>/main?action=shipmentForm" class="btn btn-primary btn-sm">+ Create New Shipment</a>
     </div>
     <div class="card-body">
         <table>
-            <thead><tr><th>#</th><th>Đơn #</th><th>Khách hàng</th><th>Tài xế</th><th>Tuyến</th><th>Ngày giao</th><th>Ngày nhận</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>#</th><th>Order #</th><th>Customer</th><th>Driver</th><th>Route</th><th>Ship Date</th><th>Delivery Date</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
                 <c:forEach var="s" items="${shipments}">
                 <tr>
@@ -29,7 +29,7 @@
                                 <option value="Delivered" ${s.status=='Delivered' ? 'selected':''}>Delivered</option>
                                 <option value="Cancelled" ${s.status=='Cancelled' ? 'selected':''}>Cancelled</option>
                             </select>
-                            <button type="submit" class="btn btn-success btn-sm">Cập nhật</button>
+                            <button type="submit" class="btn btn-success btn-sm">Update</button>
                         </form>
                     </td>
                 </tr>

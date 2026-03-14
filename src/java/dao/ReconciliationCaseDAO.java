@@ -17,7 +17,7 @@ public class ReconciliationCaseDAO {
                      "JOIN DeliveryOrders o ON rc.order_id=o.order_id " +
                      "JOIN Customers c ON o.customer_id=c.customer_id " +
                      "JOIN AlertEvents ae ON rc.alert_id=ae.alert_id " +
-                     "JOIN AlertRules ar ON ae.rule_id=ar.rule_id ORDER BY rc.case_id DESC";
+                     "JOIN AlertRules ar ON ae.rule_id=ar.rule_id ORDER BY rc.case_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

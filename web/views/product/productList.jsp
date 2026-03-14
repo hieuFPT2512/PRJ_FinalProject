@@ -3,12 +3,12 @@
 <%@ include file="/views/header.jsp" %>
 <div class="card">
     <div class="card-header">
-        <h2>📦 Quản lý Sản phẩm</h2>
-        <a href="<%= request.getContextPath() %>/main?action=productForm" class="btn btn-primary btn-sm">+ Thêm mới</a>
+        <h2>📦 Product Management</h2>
+        <a href="<%= request.getContextPath() %>/main?action=productForm" class="btn btn-primary btn-sm">+ Add New</a>
     </div>
     <div class="card-body">
         <table>
-            <thead><tr><th>#</th><th>SKU</th><th>Tên sản phẩm</th><th>Danh mục</th><th>Đơn vị</th><th>Đơn giá</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>#</th><th>SKU</th><th>Product Name</th><th>Category</th><th>Unit</th><th>Price</th><th>Action</th></tr></thead>
             <tbody>
                 <c:forEach var="p" items="${products}">
                 <tr>
@@ -16,8 +16,8 @@
                     <td>${p.category}</td><td>${p.unit}</td>
                     <td style="text-align:right;">${p.price}</td>
                     <td>
-                        <a href="<%= request.getContextPath() %>/main?action=productForm&id=${p.productId}" class="btn btn-warning btn-sm">Sửa</a>
-                        <a href="<%= request.getContextPath() %>/main?action=productDelete&id=${p.productId}" class="btn btn-danger btn-sm" onclick="return confirm('Xóa?')">Xóa</a>
+                        <a href="<%= request.getContextPath() %>/main?action=productForm&id=${p.productId}" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="<%= request.getContextPath() %>/main?action=productDelete&id=${p.productId}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
                     </td>
                 </tr>
                 </c:forEach>

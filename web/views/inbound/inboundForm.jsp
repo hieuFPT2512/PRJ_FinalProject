@@ -3,31 +3,31 @@
 <%@ include file="/views/header.jsp" %>
 <div class="card">
     <div class="card-header">
-        <h2>➕ Tạo Phiếu Nhập kho</h2>
-        <a href="<%= request.getContextPath() %>/main?action=inboundList" class="btn btn-secondary btn-sm">← Quay lại</a>
+        <h2>➕ Create Inbound Receipt</h2>
+        <a href="<%= request.getContextPath() %>/main?action=inboundList" class="btn btn-secondary btn-sm">← Back</a>
     </div>
     <div class="card-body" style="max-width:500px;">
         <form method="post" action="<%= request.getContextPath() %>/main?action=inboundSave">
             <div class="form-group">
-                <label>Đơn giao hàng *</label>
+                <label>Delivery Order *</label>
                 <select name="orderId" class="form-control" required>
-                    <option value="">-- Chọn đơn --</option>
+                    <option value="">-- Select order --</option>
                     <c:forEach var="o" items="${orders}">
                         <option value="${o.orderId}">#${o.orderId} - ${o.customerName}</option>
                     </c:forEach>
                 </select>
             </div>
             <div class="form-group">
-                <label>Kho nhập *</label>
+                <label>Warehouse *</label>
                 <select name="warehouseId" class="form-control" required>
-                    <option value="">-- Chọn kho --</option>
+                    <option value="">-- Select warehouse --</option>
                     <c:forEach var="w" items="${warehouses}">
                         <option value="${w.warehouseId}">${w.warehouseName}</option>
                     </c:forEach>
                 </select>
             </div>
             <div class="form-group">
-                <label>Lý do nhập</label>
+                <label>Inbound Reason</label>
                 <select name="reason" class="form-control">
                     <option>Return</option>
                     <option>Damage</option>
@@ -36,7 +36,7 @@
                     <option>Other</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">💾 Tạo phiếu nhập</button>
+            <button type="submit" class="btn btn-primary">💾 Create Inbound Receipt</button>
         </form>
     </div>
 </div>

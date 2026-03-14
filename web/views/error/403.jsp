@@ -17,10 +17,10 @@
     <p class="error-msg">
         <%= request.getAttribute("errorMessage") != null
             ? request.getAttribute("errorMessage")
-            : "Bạn không có quyền truy cập chức năng này." %>
+            : "You do not have permission to access this function." %>
     </p>
     <a href="<%= request.getContextPath() %>/main?action=dashboard" class="btn-back">
-        ← Về Dashboard
+        ← Back to Dashboard
     </a>
 </div>
 
