@@ -14,7 +14,7 @@ public class InboundDocumentDAO {
         String sql = "SELECT id.*, w.warehouse_name, c.customer_name FROM InboundDocuments id " +
                      "JOIN Warehouses w ON id.warehouse_id=w.warehouse_id " +
                      "JOIN DeliveryOrders o ON id.order_id=o.order_id " +
-                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY id.inbound_id DESC";
+                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY id.inbound_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

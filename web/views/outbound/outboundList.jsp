@@ -3,12 +3,12 @@
 <%@ include file="/views/header.jsp" %>
 <div class="card">
     <div class="card-header">
-        <h2>⬆️ Phiếu Xuất kho</h2>
-        <a href="<%= request.getContextPath() %>/main?action=outboundForm" class="btn btn-primary btn-sm">+ Tạo phiếu xuất</a>
+        <h2>⬆️ Outbound Receipts</h2>
+        <a href="<%= request.getContextPath() %>/main?action=outboundForm" class="btn btn-primary btn-sm">+ Create Outbound Receipt</a>
     </div>
     <div class="card-body">
         <table>
-            <thead><tr><th>#</th><th>Đơn #</th><th>Khách hàng</th><th>Kho</th><th>Ngày xuất</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>#</th><th>Order #</th><th>Customer</th><th>Warehouse</th><th>Outbound Date</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
                 <c:forEach var="o" items="${outbounds}">
                 <tr>
@@ -33,7 +33,7 @@
                                 <option value="Closed"    ${o.status=='Closed'   ?'selected':''}>Closed</option>
                                 <option value="Cancelled" ${o.status=='Cancelled'?'selected':''}>Cancelled</option>
                             </select>
-                            <button type="submit" class="btn btn-warning btn-sm">Cập nhật</button>
+                            <button type="submit" class="btn btn-warning btn-sm">Update</button>
                         </form>
                     </td>
                 </tr>

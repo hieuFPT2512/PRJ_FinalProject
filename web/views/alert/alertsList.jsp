@@ -2,13 +2,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/views/header.jsp" %>
 <div class="card">
-    <div class="card-header"><h2>🔔 Danh sách Cảnh báo (Open)</h2></div>
+    <div class="card-header"><h2>🔔 Alert List (Open)</h2></div>
     <div class="card-body">
         <c:if test="${empty alerts}">
-            <div class="alert-box success">✅ Không có cảnh báo nào đang mở.</div>
+            <div class="alert-box success">✅ No open alerts.</div>
         </c:if>
         <table>
-            <thead><tr><th>#</th><th>Đơn #</th><th>Khách hàng</th><th>Quy tắc</th><th>Mức độ</th><th>Risk Score</th><th>Thời điểm</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>#</th><th>Order #</th><th>Customer</th><th>Rule</th><th>Severity</th><th>Risk Score</th><th>Time</th><th>Action</th></tr></thead>
             <tbody>
                 <c:forEach var="a" items="${alerts}">
                 <tr>
@@ -20,9 +20,9 @@
                     <td style="font-weight:600;color:${a.riskScore >= 8 ? '#c62828' : '#f57f17'};">${a.riskScore}</td>
                     <td>${a.detectedAt}</td>
                     <td>
-                        <a href="<%= request.getContextPath() %>/main?action=alertDetail&id=${a.alertId}" class="btn btn-secondary btn-sm">Chi tiết</a>
+                        <a href="<%= request.getContextPath() %>/main?action=alertDetail&id=${a.alertId}" class="btn btn-secondary btn-sm">Detail</a>
                         <a href="<%= request.getContextPath() %>/main?action=alertClose&id=${a.alertId}" class="btn btn-success btn-sm"
-                           onclick="return confirm('Đóng cảnh báo này?')">✔ Đóng</a>
+                           onclick="return confirm('Close this alert?')">✔ Close</a>
                     </td>
                 </tr>
                 </c:forEach>

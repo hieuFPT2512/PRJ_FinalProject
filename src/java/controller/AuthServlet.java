@@ -44,7 +44,7 @@ public class AuthServlet extends HttpServlet {
                     request.getSession().setAttribute("loggedUser", user);
                     response.sendRedirect(request.getContextPath() + "/main?action=dashboard");
                 } else {
-                    request.setAttribute("error", "Sai tên đăng nhập hoặc mật khẩu!");
+                    request.setAttribute("error", "Incorrect username or password!");
                     request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
                 }
             } else {

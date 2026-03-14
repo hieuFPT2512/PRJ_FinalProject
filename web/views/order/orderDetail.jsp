@@ -3,23 +3,23 @@
 <%@ include file="/views/header.jsp" %>
 <div class="card">
     <div class="card-header">
-        <h2>📋 Chi tiết Đơn #${order.orderId}</h2>
-        <a href="<%= request.getContextPath() %>/main?action=orderList" class="btn btn-secondary btn-sm">← Quay lại</a>
+        <h2>📋 Order Details #${order.orderId}</h2>
+        <a href="<%= request.getContextPath() %>/main?action=orderList" class="btn btn-secondary btn-sm">← Back</a>
     </div>
     <div class="card-body">
         <table style="width:auto;margin-bottom:20px;">
-            <tr><td style="padding:6px 15px;font-weight:600;">Khách hàng:</td><td>${order.customerName}</td></tr>
-            <tr><td style="padding:6px 15px;font-weight:600;">Kho xuất:</td><td>${order.warehouseName}</td></tr>
-            <tr><td style="padding:6px 15px;font-weight:600;">Tuyến:</td><td>${order.route}</td></tr>
-            <tr><td style="padding:6px 15px;font-weight:600;">COD:</td><td>${order.hasCod == 'Y' ? 'Có' : 'Không'}</td></tr>
-            <tr><td style="padding:6px 15px;font-weight:600;">Tổng tiền:</td><td>${order.totalAmount}</td></tr>
-            <tr><td style="padding:6px 15px;font-weight:600;">Trạng thái:</td><td>${order.status}</td></tr>
-            <tr><td style="padding:6px 15px;font-weight:600;">Ngày tạo:</td><td>${order.orderDate}</td></tr>
+            <tr><td style="padding:6px 15px;font-weight:600;">Customer:</td><td>${order.customerName}</td></tr>
+            <tr><td style="padding:6px 15px;font-weight:600;">Warehouse:</td><td>${order.warehouseName}</td></tr>
+            <tr><td style="padding:6px 15px;font-weight:600;">Route:</td><td>${order.route}</td></tr>
+            <tr><td style="padding:6px 15px;font-weight:600;">COD:</td><td>${order.hasCod == 'Y' ? 'Yes' : 'No'}</td></tr>
+            <tr><td style="padding:6px 15px;font-weight:600;">Total Amount:</td><td>${order.totalAmount}</td></tr>
+            <tr><td style="padding:6px 15px;font-weight:600;">Status:</td><td>${order.status}</td></tr>
+            <tr><td style="padding:6px 15px;font-weight:600;">Created Date:</td><td>${order.orderDate}</td></tr>
         </table>
 
-        <h3 style="color:#1e3a5f;margin-bottom:10px;">Danh sách hàng trong đơn</h3>
+        <h3 style="color:#1e3a5f;margin-bottom:10px;">Order Item List</h3>
         <table>
-            <thead><tr><th>#</th><th>SKU</th><th>Sản phẩm</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+            <thead><tr><th>#</th><th>SKU</th><th>Product</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr></thead>
             <tbody>
                 <c:forEach var="item" items="${order.items}">
                 <tr>

@@ -56,7 +56,7 @@ public class AuthUtils {
     public static void denyAccess(HttpServletRequest request, HttpServletResponse response)
             throws javax.servlet.ServletException, IOException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        request.setAttribute("errorMessage", "Bạn không có quyền truy cập chức năng này.");
+        request.setAttribute("errorMessage", "You do not have permission to access this function.");
         request.getRequestDispatcher("/views/error/403.jsp").forward(request, response);
     }
 }

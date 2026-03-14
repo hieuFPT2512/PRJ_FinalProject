@@ -12,7 +12,7 @@ public class ProofOfDeliveryDAO {
     public List<ProofOfDelivery> getAll() {
         List<ProofOfDelivery> list = new ArrayList<>();
         String sql = "SELECT p.*, s.driver_name, s.order_id FROM ProofOfDeliveries p " +
-                     "JOIN Shipments s ON p.shipment_id=s.shipment_id ORDER BY p.pod_id DESC";
+                     "JOIN Shipments s ON p.shipment_id=s.shipment_id ORDER BY p.pod_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

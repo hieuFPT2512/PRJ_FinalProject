@@ -2,10 +2,10 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/views/header.jsp" %>
 <div class="card">
-    <div class="card-header"><h2>🧾 Quản lý Hóa đơn</h2></div>
+    <div class="card-header"><h2>🧾 Invoice Management</h2></div>
     <div class="card-body">
         <table>
-            <thead><tr><th>#</th><th>Đơn #</th><th>Khách hàng</th><th>Ngày xuất</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>#</th><th>Order #</th><th>Customer</th><th>Issue Date</th><th>Total Amount</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
                 <c:forEach var="i" items="${invoices}">
                 <tr>
@@ -22,12 +22,12 @@
                         </c:choose>
                     </td>
                     <td>
-                        <a href="<%= request.getContextPath() %>/main?action=invoiceDetail&id=${i.invoiceId}" class="btn btn-secondary btn-sm">Chi tiết</a>
+                        <a href="<%= request.getContextPath() %>/main?action=invoiceDetail&id=${i.invoiceId}" class="btn btn-secondary btn-sm">Detail</a>
                         <form method="post" action="<%= request.getContextPath() %>/main?action=invoiceUpdate" style="display:inline;">
                             <input type="hidden" name="invoiceId" value="${i.invoiceId}">
                             <input type="hidden" name="status" value="Paid">
                             <c:if test="${i.status == 'Unpaid'}">
-                                <button type="submit" class="btn btn-success btn-sm">✔ Đánh dấu Paid</button>
+                                <button type="submit" class="btn btn-success btn-sm">✔ Mark as Paid</button>
                             </c:if>
                         </form>
                     </td>

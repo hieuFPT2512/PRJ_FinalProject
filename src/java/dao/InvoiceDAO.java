@@ -13,7 +13,7 @@ public class InvoiceDAO {
         List<Invoice> list = new ArrayList<>();
         String sql = "SELECT i.*, c.customer_name FROM Invoices i " +
                      "JOIN DeliveryOrders o ON i.order_id=o.order_id " +
-                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY i.invoice_id DESC";
+                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY i.invoice_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -46,7 +46,7 @@ public class InvoiceDAO {
         if (toDate != null && !toDate.isEmpty())     { sql.append(" AND i.issue_date<=?"); params.add(toDate + " 23:59:59"); }
         if (status != null && !status.isEmpty())     { sql.append(" AND i.status=?");      params.add(status); }
         if (orderId != null && !orderId.isEmpty())   { sql.append(" AND i.order_id=?");    params.add(Integer.parseInt(orderId)); }
-        sql.append(" ORDER BY i.issue_date DESC");
+        sql.append(" ORDER BY i.issue_date ASC");
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {

@@ -14,7 +14,7 @@ public class PaymentDAO {
         String sql = "SELECT p.*, i.order_id, c.customer_name FROM Payments p " +
                      "JOIN Invoices i ON p.invoice_id=i.invoice_id " +
                      "JOIN DeliveryOrders o ON i.order_id=o.order_id " +
-                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY p.payment_id DESC";
+                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY p.payment_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
