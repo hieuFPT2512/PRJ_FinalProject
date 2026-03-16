@@ -3,15 +3,8 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Dao%20Minh%20Khoi/OneDrive/Desktop/PRJ301/PRJ_FinalProject/web/views/auth/userForm.jsp</file>
-            <file>file:/C:/Users/Dao%20Minh%20Khoi/OneDrive/Desktop/PRJ301/PRJ_FinalProject/web/views/auth/userList.jsp</file>
-            <file>file:/C:/Users/Dao%20Minh%20Khoi/OneDrive/Desktop/PRJ301/PRJ_FinalProject/web/views/auth/login.jsp</file>
-            <file>file:/C:/Users/Dao%20Minh%20Khoi/OneDrive/Desktop/PRJ301/PRJ_FinalProject/web/views/product/productList.jsp</file>
-            <file>file:/C:/Users/Dao%20Minh%20Khoi/OneDrive/Desktop/PRJ301/PRJ_FinalProject/web/views/header.jsp</file>
-            <file>file:/C:/Users/Dao%20Minh%20Khoi/OneDrive/Desktop/PRJ301/PRJ_FinalProject/src/java/utils/DBContext.java</file>
-            <file>file:/C:/Users/Dao%20Minh%20Khoi/OneDrive/Desktop/PRJ301/PRJ_FinalProject/web/views/dashboard.jsp</file>
-            <file>file:/C:/Users/Dao%20Minh%20Khoi/OneDrive/Desktop/PRJ301/PRJ_FinalProject/web/views/footer.jsp</file>
-            <file>file:/C:/Users/Dao%20Minh%20Khoi/OneDrive/Desktop/PRJ301/PRJ_FinalProject/web/index.jsp</file>
+            <file>file:/D:/1.%20FPTU/4.%20SPRING_2026/1.%20PRJ301/6.%20Final%20Project/Final/PRJ_FinalProject/src/java/dao/ShipmentDAO.java</file>
+            <file>file:/D:/1.%20FPTU/4.%20SPRING_2026/1.%20PRJ301/6.%20Final%20Project/Final/PRJ_FinalProject/src/java/controller/DeliveryServlet.java</file>
         </group>
     </open-files>
 </project-private>

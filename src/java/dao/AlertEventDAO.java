@@ -14,7 +14,7 @@ public class AlertEventDAO {
         String sql = "SELECT ae.*, ar.rule_name, ar.severity, c.customer_name FROM AlertEvents ae " +
                      "JOIN AlertRules ar ON ae.rule_id=ar.rule_id " +
                      "JOIN DeliveryOrders o ON ae.order_id=o.order_id " +
-                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER ORDER BY ae.alert_id ASC";
+                     "JOIN Customers c ON o.customer_id=c.customer_id ORDER BY ae.alert_id ASC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -66,7 +66,6 @@ public class AlertEventDAO {
         ae.setOrderId(rs.getInt("order_id"));
         ae.setRuleId(rs.getInt("rule_id"));
         ae.setDetectedAt(rs.getTimestamp("detected_at"));
-        ae.setRiskScore(rs.getBigDecimal("risk_score"));
         ae.setStatus(rs.getString("status"));
         ae.setRuleName(rs.getString("rule_name"));
         ae.setSeverity(rs.getString("severity"));

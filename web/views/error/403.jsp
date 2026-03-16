@@ -13,7 +13,7 @@
 </style>
 
 <div class="error-container">
-    <p class="error-code">403</p>
+    <p class="error-code">ACCESS DENIED</p>
     <p class="error-msg">
         <%= request.getAttribute("errorMessage") != null
             ? request.getAttribute("errorMessage")

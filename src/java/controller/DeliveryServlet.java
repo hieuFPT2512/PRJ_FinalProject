@@ -198,6 +198,11 @@ public class DeliveryServlet extends HttpServlet {
                 su.setShipmentId(Integer.parseInt(request.getParameter("shipmentId")));
                 su.setDriverName(request.getParameter("driverName"));
                 su.setStatus(request.getParameter("status"));
+                if ("Delivered".equals(request.getParameter("status"))) {
+                    su.setDeliveryDate(new java.sql.Timestamp(System.currentTimeMillis()));
+                } else {
+                    su.setDeliveryDate(null);
+                }
                 shipmentDAO.update(su);
                 logAction(request, "UPDATE", "Shipments", su.getShipmentId());
                 response.sendRedirect(request.getContextPath() + "/main?action=shipmentList");
