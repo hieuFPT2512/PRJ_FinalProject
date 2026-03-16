@@ -8,7 +8,6 @@ public class AlertEvent {
     private int orderId;
     private int ruleId;
     private Timestamp detectedAt;
-    private BigDecimal riskScore;
     private String status;
     // joined
     private String ruleName;
@@ -25,8 +24,6 @@ public class AlertEvent {
     public void setRuleId(int ruleId) { this.ruleId = ruleId; }
     public Timestamp getDetectedAt() { return detectedAt; }
     public void setDetectedAt(Timestamp detectedAt) { this.detectedAt = detectedAt; }
-    public BigDecimal getRiskScore() { return riskScore; }
-    public void setRiskScore(BigDecimal riskScore) { this.riskScore = riskScore; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getRuleName() { return ruleName; }

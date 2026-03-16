@@ -8,7 +8,7 @@
             <div class="alert-box success">✅ No open alerts.</div>
         </c:if>
         <table>
-            <thead><tr><th>#</th><th>Order #</th><th>Customer</th><th>Rule</th><th>Severity</th><th>Risk Score</th><th>Time</th><th>Action</th></tr></thead>
+            <thead><tr><th>#</th><th>Order #</th><th>Customer</th><th>Rule</th><th>Severity</th><th>Time</th><th>Action</th></tr></thead>
             <tbody>
                 <c:forEach var="a" items="${alerts}">
                 <tr>
@@ -17,7 +17,6 @@
                     <td>${a.customerName}</td>
                     <td>${a.ruleName}</td>
                     <td><span class="badge severity-${a.severity}">${a.severity}</span></td>
-                    <td style="font-weight:600;color:${a.riskScore >= 8 ? '#c62828' : '#f57f17'};">${a.riskScore}</td>
                     <td>${a.detectedAt}</td>
                     <td>
                         <a href="<%= request.getContextPath() %>/main?action=alertDetail&id=${a.alertId}" class="btn btn-secondary btn-sm">Detail</a>
