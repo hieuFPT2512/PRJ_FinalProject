@@ -7,6 +7,8 @@
         <a href="<%= request.getContextPath() %>/main?action=orderForm" class="btn btn-primary btn-sm">+ Create New Order</a>
     </div>
     <div class="card-body">
+        <c:if test="${not empty error}"><div class="alert-box error">⚠️ ${error}</div></c:if>
+        <c:if test="${not empty success}"><div class="alert-box success">✅ ${success}</div></c:if>
         <table>
             <thead>
                 <tr><th>#</th><th>Customer</th><th>Warehouse</th><th>Route</th><th>COD</th><th>Total Amount</th><th>Status</th><th>Created Date</th><th>Action</th></tr>
@@ -37,7 +39,6 @@
                     <td>
                         <a href="<%= request.getContextPath() %>/main?action=orderDetail&id=${o.orderId}" class="btn btn-secondary btn-sm">Detail</a>
                         <a href="<%= request.getContextPath() %>/main?action=orderForm&id=${o.orderId}" class="btn btn-warning btn-sm">Edit</a>
-                        <a href="<%= request.getContextPath() %>/main?action=orderDelete&id=${o.orderId}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this order?')">Delete</a>
                     </td>
                 </tr>
                 </c:forEach>

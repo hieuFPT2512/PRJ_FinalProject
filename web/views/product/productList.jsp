@@ -7,6 +7,7 @@
         <a href="<%= request.getContextPath()%>/main?action=productForm" class="btn btn-primary btn-sm">+ Add New</a>
     </div>
     <div class="card-body">
+        <c:if test="${not empty error}"><div class="alert-box error">⚠️ ${error}</div></c:if>
         <table>
             <thead>
                 <tr>

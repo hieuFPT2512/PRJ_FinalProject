@@ -46,7 +46,14 @@
                     <td>${p.orderId}</td>
                     <td>${p.customerName}</td>
                     <td style="text-align:right;font-weight:600;">${p.amount}</td>
-                    <td><span class="badge badge-info">${p.method}</span></td>
+                    <td>
+                        <c:choose>
+                            <c:when test="${p.method == 'COD'}"><span class="badge badge-method-cod">COD</span></c:when>
+                            <c:when test="${p.method == 'Bank'}"><span class="badge badge-method-bank">Bank</span></c:when>
+                            <c:when test="${p.method == 'Cash'}"><span class="badge badge-method-cash">Cash</span></c:when>
+                            <c:otherwise><span class="badge badge-secondary">${p.method}</span></c:otherwise>
+                        </c:choose>
+                    </td>
                     <td>${p.paidDate}</td>
                 </tr>
                 </c:forEach>

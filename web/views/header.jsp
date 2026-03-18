@@ -29,12 +29,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeliverAcct Auto Alert</title>
+    <title>Delivery Auto Alert</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
 </head>
 <body>
 <nav class="navbar">
-    <a class="brand" href="<%= request.getContextPath() %>/main?action=dashboard">🚚 DeliverAcct</a>
+    <a class="brand" href="<%= request.getContextPath() %>/main?action=dashboard">🚚 Delivery Auto Alert</a>
     <span class="user-info">
         Hello, <strong><%= loggedUser != null ? loggedUser.getFullName() : "" %></strong>
         (<%= roleName %>) &nbsp;|&nbsp;

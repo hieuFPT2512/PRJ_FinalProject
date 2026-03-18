@@ -109,6 +109,15 @@ public class DeliveryOrderDAO {
         } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
+    public boolean updateStatus(int id, String status) {
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement("UPDATE DeliveryOrders SET status=? WHERE order_id=?")) {
+            ps.setString(1, status);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
+    }
+
     public List<OrderItem> getItemsByOrderId(int orderId) {
         List<OrderItem> items = new ArrayList<>();
         String sql = "SELECT oi.*, p.product_name, p.sku FROM OrderItems oi " +

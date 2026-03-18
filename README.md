@@ -45,7 +45,7 @@ The system implements **strict role-based access control**, providing **separate
 - **Database:** SQL Server / MySQL (connected via JDBC)
 - **Frontend:** Pure HTML (optimized for performance and focused on business logic workflows)
 - **IDE:** Apache NetBeans / Eclipse
-- **Web Server:** Apache Tomcat 9.0.113.
+- **Web Server:** Apache Tomcat 9.0.113
 
 ---
 
@@ -71,3 +71,76 @@ DeliverAcctAutoAlert/
 │   ├── common/           # Shared components (Header, Footer)
 │   ├── login.jsp         # System login page
 │   └── home.jsp          # Home page after login (non-admin users)
+```
+
+---
+
+# ⚙️ Prerequisites & Installation
+
+## Prerequisites
+
+Before running the project, make sure you have the following installed:
+
+| Tool | Version | Notes |
+|------|---------|-------|
+| JDK | 8 (update 172+) | [Download](https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html) |
+| Apache Tomcat | 9.0.x | [Download](https://tomcat.apache.org/download-90.cgi) |
+| SQL Server / MySQL | Latest stable | Either database is supported |
+| Apache NetBeans / Eclipse | Latest stable | Recommended IDE |
+
+---
+
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/your-username/DeliverAcctAutoAlert.git
+```
+
+### 2. Import the project into your IDE
+
+- **NetBeans:** `File` → `Open Project` → select the cloned folder
+- **Eclipse:** `File` → `Import` → `Existing Projects into Workspace`
+
+### 3. Set up the database
+
+- Create a new database named `deliver_acct_db` (or your preferred name)
+- Run the provided SQL script to initialize the schema and seed data:
+
+```bash
+# SQL Server
+sqlcmd -S localhost -U sa -P yourpassword -d deliver_acct_db -i database/schema.sql
+
+# MySQL
+mysql -u root -p deliver_acct_db < database/schema.sql
+```
+
+### 4. Configure the database connection
+
+Open `src/java/utils/DBUtils.java` and update the connection details:
+
+```java
+private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=deliver_acct_db";
+// or for MySQL:
+// private static final String URL = "jdbc:mysql://localhost:3306/deliver_acct_db";
+
+private static final String USERNAME = "your_db_username";
+private static final String PASSWORD = "your_db_password";
+```
+
+### 5. Deploy to Tomcat and access the application
+
+- **NetBeans:** Right-click project → `Run` (auto-deploys to configured Tomcat)
+- **Eclipse:** Right-click project → `Run As` → `Run on Server` → select Tomcat 9
+- Access the application
+
+
+# 👥 Contributors
+
+| Name | Role |
+|------|------|
+| Mai Xuan Hieu | UI/UX Design |
+| Dao Minh Khoi | Database Design |
+| Dao Hoang Nhat | Logic & Testing |
+| Hoang Thach Thai Son | Logic & Testing |

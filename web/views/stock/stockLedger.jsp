@@ -16,8 +16,8 @@
             </select>
             <select name="refType" class="form-control" style="width:120px;">
                 <option value="">Type</option>
-                <option value="OUT">OUT</option>
-                <option value="IN">IN</option>
+                <option value="OUTBOUND">OUTBOUND</option>
+                <option value="INBOUND">INBOUND</option>
             </select>
             <input type="date" name="fromDate" class="form-control" style="width:145px;">
             <input type="date" name="toDate"   class="form-control" style="width:145px;">
@@ -33,8 +33,14 @@
                     <td>${l.sku}</td>
                     <td>${l.productName}</td>
                     <td>${l.refId}</td>
-                    <td><span class="badge ${l.refType=='OUT' ? 'badge-danger' : 'badge-success'}">${l.refType}</span></td>
-                    <td style="text-align:right;color:${l.qtyChange < 0 ? '#c62828' : '#2e7d32'};">${l.qtyChange}</td>
+                    <td>
+                        <c:choose>
+                            <c:when test="${l.refType == 'OUTBOUND'}"><span class="badge badge-outbound">OUTBOUND</span></c:when>
+                            <c:when test="${l.refType == 'INBOUND'}"><span class="badge badge-inbound">INBOUND</span></c:when>
+                            <c:otherwise><span class="badge badge-secondary">${l.refType}</span></c:otherwise>
+                        </c:choose>
+                    </td>
+                    <td style="text-align:right;font-weight:600;color:${l.qtyChange < 0 ? '#c62828' : '#2e7d32'};">${l.qtyChange}</td>
                     <td style="text-align:right;font-weight:600;">${l.balanceAfter}</td>
                     <td>${l.createdAt}</td>
                 </tr>

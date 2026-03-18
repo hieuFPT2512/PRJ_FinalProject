@@ -101,9 +101,15 @@ public class MasterDataServlet extends HttpServlet {
             case "customerDelete":
                 if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
                 int cDelId = Integer.parseInt(request.getParameter("id"));
-                customerDAO.delete(cDelId);
-                logAction(request, "DELETE", "Customers", cDelId);
-                response.sendRedirect(request.getContextPath() + "/main?action=customerList");
+                boolean cDelOk = customerDAO.delete(cDelId);
+                if (cDelOk) {
+                    logAction(request, "DELETE", "Customers", cDelId);
+                    response.sendRedirect(request.getContextPath() + "/main?action=customerList");
+                } else {
+                    request.setAttribute("error", "Cannot delete: this customer has existing delivery orders.");
+                    request.setAttribute("customers", customerDAO.getAll());
+                    request.getRequestDispatcher("/views/customer/customerList.jsp").forward(request, response);
+                }
                 break;
 
             // ══════════════ PRODUCT ══════════════
@@ -143,9 +149,15 @@ public class MasterDataServlet extends HttpServlet {
             case "productDelete":
                 if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
                 int pDelId = Integer.parseInt(request.getParameter("id"));
-                productDAO.delete(pDelId);
-                logAction(request, "DELETE", "Products", pDelId);
-                response.sendRedirect(request.getContextPath() + "/main?action=productList");
+                boolean pDelOk = productDAO.delete(pDelId);
+                if (pDelOk) {
+                    logAction(request, "DELETE", "Products", pDelId);
+                    response.sendRedirect(request.getContextPath() + "/main?action=productList");
+                } else {
+                    request.setAttribute("error", "Cannot delete: this product is referenced by existing order items or stock ledger.");
+                    request.setAttribute("products", productDAO.getAll());
+                    request.getRequestDispatcher("/views/product/productList.jsp").forward(request, response);
+                }
                 break;
 
             // ══════════════ WAREHOUSE ══════════════
@@ -183,9 +195,15 @@ public class MasterDataServlet extends HttpServlet {
             case "warehouseDelete":
                 if (!AuthUtils.hasRole(loginUser, CAN_EDIT)) { AuthUtils.denyAccess(request, response); return; }
                 int wDelId = Integer.parseInt(request.getParameter("id"));
-                warehouseDAO.delete(wDelId);
-                logAction(request, "DELETE", "Warehouses", wDelId);
-                response.sendRedirect(request.getContextPath() + "/main?action=warehouseList");
+                boolean wDelOk = warehouseDAO.delete(wDelId);
+                if (wDelOk) {
+                    logAction(request, "DELETE", "Warehouses", wDelId);
+                    response.sendRedirect(request.getContextPath() + "/main?action=warehouseList");
+                } else {
+                    request.setAttribute("error", "Cannot delete: this warehouse is referenced by existing delivery orders or stock documents.");
+                    request.setAttribute("warehouses", warehouseDAO.getAll());
+                    request.getRequestDispatcher("/views/warehouse/warehouseList.jsp").forward(request, response);
+                }
                 break;
 
             default:

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+    <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/views/header.jsp" %>
 <div class="card">
@@ -16,13 +16,16 @@
                     <td>${c.customerName}</td>
                     <td style="text-align:right;">${c.expectedCod}</td>
                     <td style="text-align:right;">${c.receivedCod}</td>
-                    <td style="text-align:right;color:${c.mismatchAmount != 0 ? '#c62828' : '#2e7d32'};font-weight:600;">
+                    <td style="text-align:right;font-weight:600;color:${c.mismatchAmount != 0 ? '#c62828' : '#2e7d32'};">
                         ${c.mismatchAmount}
                     </td>
                     <td>
                         <c:choose>
-                            <c:when test="${c.status == 'OK'}"><span class="badge badge-success">${c.status}</span></c:when>
-                            <c:when test="${c.status == 'Mismatch'}"><span class="badge badge-danger">${c.status}</span></c:when>
+                            <c:when test="${c.status == 'OK'}"><span class="badge badge-cod-ok">OK</span></c:when>
+                            <c:when test="${c.status == 'Mismatch'}"><span class="badge badge-cod-mismatch">Mismatch</span></c:when>
+                            <c:when test="${c.status == 'Pending'}"><span class="badge badge-pending">Pending</span></c:when>
+                            <c:when test="${c.status == 'No COD'}"><span class="badge badge-cod-nocod">No COD</span></c:when>
+                            <c:when test="${c.status == 'Cancelled'}"><span class="badge badge-cancelled">Cancelled</span></c:when>
                             <c:otherwise><span class="badge badge-secondary">${c.status}</span></c:otherwise>
                         </c:choose>
                     </td>
@@ -34,6 +37,8 @@
                                 <option value="OK"       ${c.status=='OK'      ?'selected':''}>OK</option>
                                 <option value="Mismatch" ${c.status=='Mismatch'?'selected':''}>Mismatch</option>
                                 <option value="No COD"   ${c.status=='No COD'  ?'selected':''}>No COD</option>
+                                <option value="Pending"  ${c.status=='Pending' ?'selected':''}>Pending</option>
+                                <option value="Cancelled"   ${c.status=='Cancelled'  ?'selected':''}>Cancelled</option>
                             </select>
                             <button type="submit" class="btn btn-warning btn-sm">Update</button>
                         </form>

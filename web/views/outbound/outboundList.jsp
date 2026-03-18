@@ -19,8 +19,10 @@
                     <td>${o.docDate}</td>
                     <td>
                         <c:choose>
-                            <c:when test="${o.status == 'Approved'}"><span class="badge badge-success">${o.status}</span></c:when>
-                            <c:when test="${o.status == 'Pending'}"><span class="badge badge-warning">${o.status}</span></c:when>
+                            <c:when test="${o.status == 'Approved'}"><span class="badge badge-approved">Approved</span></c:when>
+                            <c:when test="${o.status == 'Pending'}"><span class="badge badge-pending">Pending</span></c:when>
+                            <c:when test="${o.status == 'Closed'}"><span class="badge badge-closed">Closed</span></c:when>
+                            <c:when test="${o.status == 'Cancelled'}"><span class="badge badge-cancelled">Cancelled</span></c:when>
                             <c:otherwise><span class="badge badge-secondary">${o.status}</span></c:otherwise>
                         </c:choose>
                     </td>
@@ -33,7 +35,7 @@
                                 <option value="Closed"    ${o.status=='Closed'   ?'selected':''}>Closed</option>
                                 <option value="Cancelled" ${o.status=='Cancelled'?'selected':''}>Cancelled</option>
                             </select>
-                            <button type="submit" class="btn btn-warning btn-sm">Update</button>
+                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
                         </form>
                     </td>
                 </tr>
