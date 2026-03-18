@@ -14,11 +14,12 @@ public class ProductDAO {
 
         String sql = "SELECT p.*, w.warehouse_name, sl.balance_after "
                 + "FROM Products p "
-                + "LEFT JOIN StockLedgers sl ON p.product_id = sl.product_id "
-                + "LEFT JOIN Warehouses w ON sl.warehouse_id = w.warehouse_id "
+                + "LEFT JOIN StockLedgers sl ON sl.product_id = p.product_id "
                 + "AND sl.ledger_id = ("
                 + "   SELECT MAX(ledger_id) FROM StockLedgers WHERE product_id = p.product_id"
-                + ")";
+                + ") "
+                + "LEFT JOIN Warehouses w ON sl.warehouse_id = w.warehouse_id "
+                + "ORDER BY p.product_id";
 
         try ( Connection conn = DBContext.getConnection();  PreparedStatement ps = conn.prepareStatement(sql);  ResultSet rs = ps.executeQuery()) {
 
@@ -33,7 +34,7 @@ public class ProductDAO {
                 p.setPrice(rs.getBigDecimal("price"));
 
                 p.setWarehouseName(rs.getString("warehouse_name"));
-                p.setQuantity(rs.getInt("balance_after"));
+                p.setQuantity(rs.getInt("balance_after")); // tồn hiện tại
 
                 list.add(p);
             }
