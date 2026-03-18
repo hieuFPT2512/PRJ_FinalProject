@@ -1,0 +1,186 @@
+/* ===== DeliverAcct Global Styles ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    font-size: 14px;
+}
+
+/* ----- Navbar ----- */
+.navbar {
+    background: linear-gradient(135deg, #1e3a5f, #2d6a9f);
+    color: white;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    height: 55px;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.navbar .brand { font-size: 18px; font-weight: 700; margin-right: 30px; color: #fff; text-decoration: none; }
+.navbar a { color: #cde; text-decoration: none; margin: 0 10px; font-size: 13px; }
+.navbar a:hover { color: #fff; }
+.navbar .user-info { margin-left: auto; font-size: 13px; }
+.navbar .user-info a { color: #ffcc80; }
+
+/* ----- Sidebar ----- */
+.wrapper { display: flex; margin-top: 55px; }
+
+.sidebar {
+    width: 220px;
+    /*min-height: calc(100vh - 55px);*/
+    height: calc(100vh - 55px);
+    overflow-x: hidden;
+    background: #1e3a5f;
+    padding: 15px 0;
+    position: fixed;
+    top: 55px;
+    overflow-y: auto;
+}
+
+.sidebar .menu-title {
+    color: #90bcd8;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 18px 5px;
+    margin-top: 8px;
+}
+
+.sidebar a {
+    display: block;
+    color: #cde;
+    text-decoration: none;
+    padding: 9px 18px;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+.sidebar a:hover, .sidebar a.active {
+    background: #2d6a9f;
+    color: #fff;
+    border-left: 3px solid #4fc3f7;
+}
+
+/* ----- Main Content ----- */
+.main-content { margin-left: 220px; padding: 25px; min-height: calc(100vh - 55px); }
+
+/* ----- Cards ----- */
+.card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-header h2 { font-size: 16px; color: #1e3a5f; }
+.card-body { padding: 20px; }
+
+/* ----- Tables ----- */
+table { width: 100%; border-collapse: collapse; }
+thead th {
+    background: #1e3a5f;
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 13px;
+}
+tbody tr:hover { background: #f0f7ff; }
+tbody td { padding: 9px 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+
+/* ----- Buttons ----- */
+.btn { padding: 7px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-block; }
+.btn-primary   { background: #1e6fbe; color: white; }
+.btn-success   { background: #2e7d32; color: white; }
+.btn-warning   { background: #f57f17; color: white; }
+.btn-danger    { background: #c62828; color: white; }
+.btn-secondary { background: #607d8b; color: white; }
+.btn-sm        { padding: 4px 10px; font-size: 12px; }
+.btn:hover     { opacity: 0.85; }
+
+/* ----- Forms ----- */
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 13px; }
+.form-control {
+    width: 100%; padding: 8px 10px;
+    border: 1px solid #ccc; border-radius: 5px;
+    font-size: 14px; color: #333;
+}
+.form-control:focus { outline: none; border-color: #1e6fbe; box-shadow: 0 0 0 2px rgba(30,111,190,0.15); }
+.form-row { display: flex; gap: 15px; }
+.form-row .form-group { flex: 1; }
+
+/* ----- Alerts/Messages ----- */
+.alert-box { padding: 10px 15px; border-radius: 5px; margin-bottom: 15px; font-size: 13px; }
+.alert-box.error   { background: #ffebee; border-left: 4px solid #c62828; color: #c62828; }
+.alert-box.success { background: #e8f5e9; border-left: 4px solid #2e7d32; color: #2e7d32; }
+.alert-box.warning { background: #fff8e1; border-left: 4px solid #f57f17; color: #f57f17; }
+
+/* ----- Badges ----- */
+.badge { padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.badge-success  { background: #e8f5e9; color: #2e7d32; }
+.badge-warning  { background: #fff8e1; color: #f57f17; }
+.badge-danger   { background: #ffebee; color: #c62828; }
+.badge-info     { background: #e3f2fd; color: #1565c0; }
+.badge-secondary{ background: #eceff1; color: #546e7a; }
+
+/* ----- Dashboard Stats ----- */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.stat-card { background: white; border-radius: 8px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); text-align: center; }
+.stat-card .stat-number { font-size: 28px; font-weight: 700; color: #1e6fbe; }
+.stat-card .stat-label  { font-size: 12px; color: #888; margin-top: 4px; }
+
+/* ----- Login ----- */
+.login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #1e3a5f, #2d6a9f); }
+.login-card { background: white; border-radius: 10px; padding: 40px; width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+.login-card h1 { text-align: center; color: #1e3a5f; margin-bottom: 8px; font-size: 22px; }
+.login-card .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 25px; }
+
+/* ----- Pagination ----- */
+.pagination { display: flex; gap: 5px; margin-top: 15px; }
+.pagination a { padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; color: #1e6fbe; text-decoration: none; font-size: 13px; }
+.pagination a.active { background: #1e6fbe; color: white; border-color: #1e6fbe; }
+
+/* ----- Severity badges ----- */
+.severity-High   { background: #ffebee; color: #c62828; }
+.severity-Medium { background: #fff8e1; color: #f57f17; }
+.severity-Low    { background: #e8f5e9; color: #2e7d32; }
+
+/* ===== STATUS BADGES - Color Coded ===== */
+
+/* Shipment status */
+.badge-shipping   { background: #e3f2fd; color: #1565c0; }   /* blue */
+.badge-delivered  { background: #e8f5e9; color: #1b5e20; }   /* green */
+.badge-pending    { background: #fff8e1; color: #e65100; }   /* amber */
+.badge-cancelled  { background: #fce4ec; color: #880e4f; }   /* pink-red */
+
+/* Outbound status */
+.badge-approved   { background: #e8f5e9; color: #2e7d32; }   /* green */
+.badge-closed     { background: #ede7f6; color: #4527a0; }   /* purple */
+
+/* Stock ledger type */
+.badge-outbound   { background: #ffebee; color: #b71c1c; }   /* red */
+.badge-inbound    { background: #e8f5e9; color: #1b5e20; }   /* green */
+
+/* Payment method */
+.badge-method-cod  { background: #fff3e0; color: #e65100; }  /* orange */
+.badge-method-bank { background: #e3f2fd; color: #0d47a1; }  /* blue */
+.badge-method-cash { background: #e8f5e9; color: #1b5e20; }  /* green */
+
+/* COD Reconciliation status */
+.badge-cod-ok       { background: #e8f5e9; color: #1b5e20; } /* green */
+.badge-cod-mismatch { background: #ffebee; color: #b71c1c; } /* red */
+.badge-cod-nocod    { background: #eceff1; color: #37474f; } /* grey */
