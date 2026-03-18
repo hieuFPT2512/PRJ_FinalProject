@@ -158,3 +158,29 @@ tbody td { padding: 9px 12px; border-bottom: 1px solid #eee; vertical-align: mid
 .severity-High   { background: #ffebee; color: #c62828; }
 .severity-Medium { background: #fff8e1; color: #f57f17; }
 .severity-Low    { background: #e8f5e9; color: #2e7d32; }
+
+/* ===== STATUS BADGES - Color Coded ===== */
+
+/* Shipment status */
+.badge-shipping   { background: #e3f2fd; color: #1565c0; }   /* blue */
+.badge-delivered  { background: #e8f5e9; color: #1b5e20; }   /* green */
+.badge-pending    { background: #fff8e1; color: #e65100; }   /* amber */
+.badge-cancelled  { background: #fce4ec; color: #880e4f; }   /* pink-red */
+
+/* Outbound status */
+.badge-approved   { background: #e8f5e9; color: #2e7d32; }   /* green */
+.badge-closed     { background: #ede7f6; color: #4527a0; }   /* purple */
+
+/* Stock ledger type */
+.badge-outbound   { background: #ffebee; color: #b71c1c; }   /* red */
+.badge-inbound    { background: #e8f5e9; color: #1b5e20; }   /* green */
+
+/* Payment method */
+.badge-method-cod  { background: #fff3e0; color: #e65100; }  /* orange */
+.badge-method-bank { background: #e3f2fd; color: #0d47a1; }  /* blue */
+.badge-method-cash { background: #e8f5e9; color: #1b5e20; }  /* green */
+
+/* COD Reconciliation status */
+.badge-cod-ok       { background: #e8f5e9; color: #1b5e20; } /* green */
+.badge-cod-mismatch { background: #ffebee; color: #b71c1c; } /* red */
+.badge-cod-nocod    { background: #eceff1; color: #37474f; } /* grey */

@@ -7,6 +7,7 @@
         <a href="<%= request.getContextPath() %>/main?action=customerForm" class="btn btn-primary btn-sm">+ Add New</a>
     </div>
     <div class="card-body">
+        <c:if test="${not empty error}"><div class="alert-box error">⚠️ ${error}</div></c:if>
         <form method="get" action="<%= request.getContextPath() %>/main" style="display:flex;gap:10px;margin-bottom:15px;">
             <input type="hidden" name="action" value="customerList">
             <input type="text" name="keyword" value="${keyword}" class="form-control" style="width:280px;" placeholder="Search by name, phone, email...">

@@ -19,7 +19,15 @@
                     <td>${s.route}</td>
                     <td>${s.shipDate}</td>
                     <td>${s.deliveryDate}</td>
-                    <td><span class="badge badge-info">${s.status}</span></td>
+                    <td>
+                        <c:choose>
+                            <c:when test="${s.status == 'Delivered'}"><span class="badge badge-delivered">Delivered</span></c:when>
+                            <c:when test="${s.status == 'Shipping'}"><span class="badge badge-shipping">Shipping</span></c:when>
+                            <c:when test="${s.status == 'Cancelled'}"><span class="badge badge-cancelled">Cancelled</span></c:when>
+                            <c:when test="${s.status == 'Pending'}"><span class="badge badge-pending">Pending</span></c:when>
+                            <c:otherwise><span class="badge badge-secondary">${s.status}</span></c:otherwise>
+                        </c:choose>
+                    </td>
                     <td>
                         <form method="post" action="<%= request.getContextPath() %>/main?action=shipmentUpdate" style="display:inline-flex;gap:5px;">
                             <input type="hidden" name="shipmentId" value="${s.shipmentId}">
@@ -29,7 +37,7 @@
                                 <option value="Delivered" ${s.status=='Delivered' ? 'selected':''}>Delivered</option>
                                 <option value="Cancelled" ${s.status=='Cancelled' ? 'selected':''}>Cancelled</option>
                             </select>
-                            <button type="submit" class="btn btn-success btn-sm">Update</button>
+                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
                         </form>
                     </td>
                 </tr>

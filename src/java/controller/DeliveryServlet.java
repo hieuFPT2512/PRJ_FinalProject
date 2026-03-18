@@ -136,15 +136,17 @@ public class DeliveryServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/main?action=orderList");
                 break;
 
-            case "orderDelete":
-                // Chỉ ADMIN được xóa đơn
+            case "orderCancel":
+                // Only ADMIN can cancel orders
                 if (!AuthUtils.hasRole(loginUser, RoleConstants.ROLE_ADMIN)) {
                     AuthUtils.denyAccess(request, response); return;
                 }
-                int oDelId = Integer.parseInt(request.getParameter("id"));
-                orderDAO.delete(oDelId);
-                logAction(request, "DELETE", "DeliveryOrders", oDelId);
-                response.sendRedirect(request.getContextPath() + "/main?action=orderList");
+                int oCancelId = Integer.parseInt(request.getParameter("id"));
+                orderDAO.updateStatus(oCancelId, "Cancelled");
+                logAction(request, "UPDATE", "DeliveryOrders", oCancelId);
+                request.setAttribute("success", "Order #" + oCancelId + " has been cancelled.");
+                request.setAttribute("orders", orderDAO.getAll());
+                request.getRequestDispatcher("/views/order/orderList.jsp").forward(request, response);
                 break;
 
             // ══════════════ LÔ HÀNG ══════════════

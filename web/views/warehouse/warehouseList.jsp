@@ -7,6 +7,7 @@
         <a href="<%= request.getContextPath() %>/main?action=warehouseForm" class="btn btn-primary btn-sm">+ Add New</a>
     </div>
     <div class="card-body">
+        <c:if test="${not empty error}"><div class="alert-box error">⚠️ ${error}</div></c:if>
         <table>
             <thead><tr><th>#</th><th>Warehouse Name</th><th>Location</th><th>Warehouse Manager</th><th>Created At</th><th>Action</th></tr></thead>
             <tbody>
